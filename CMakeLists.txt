@@ -4,5 +4,6 @@ project("quick-mess" LANGUAGES CXX)
 
 add_subdirectory(extern/Rain-Net)
 
+add_subdirectory(common)
 add_subdirectory(client)
 add_subdirectory(server)
