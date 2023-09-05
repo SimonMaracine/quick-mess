@@ -1,0 +1,3 @@
+[submodule "extern/Rain-Net"]
+	path = extern/Rain-Net
+	url = https://github.com/SimonMaracine/Rain-Net
