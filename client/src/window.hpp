@@ -1,8 +1,11 @@
 #pragma once
 
+#include <string>
+
 #include <gui_base/gui_base.hpp>
 
 #include "client.hpp"
+#include "chat.hpp"
 
 enum class State {
     NoConnection,
@@ -34,4 +37,9 @@ struct QuickMessWindow : public gui_base::GuiApplication {
 
     QuickMessClient client;
     State state = State::SignUp;
+
+    char buffer_chat_with[16] {};
+    std::string chat_with = "";
+
+    Chat chat;
 };
