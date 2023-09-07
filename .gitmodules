@@ -4,3 +4,6 @@
 [submodule "extern/tiny-gui-base"]
 	path = extern/tiny-gui-base
 	url = https://github.com/SimonMaracine/tiny-gui-base
+[submodule "extern/json"]
+	path = extern/json
+	url = https://github.com/SimonMaracine/json

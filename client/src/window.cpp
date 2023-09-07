@@ -3,15 +3,20 @@
 #include <cstring>
 
 #include <gui_base/gui_base.hpp>
+#include <common.hpp>
 #include <rain_net/client.hpp>
-#include <rain_net/message.hpp>
 
 #include "window.hpp"
 #include "client.hpp"
+#include "data.hpp"
 
 void QuickMessWindow::start() {
-    if (!client.connect("localhost", 7021)) {
+    if (!try_connect()) {
         state = State::NoConnection;
+    }
+
+    if (!import_user_data(data)) {
+        state = State::SignUp;
     }
 }
 
@@ -60,6 +65,16 @@ void QuickMessWindow::dispose() {
 
 void QuickMessWindow::no_connection() {
     ImGui::Text("Disconnected from server.");
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Try To Reconnect")) {
+        state = State::SignIn;
+
+        if (!try_connect()) {
+            state = State::NoConnection;
+        }
+    }
 }
 
 void QuickMessWindow::processing() {
@@ -75,19 +90,41 @@ void QuickMessWindow::sign_up() {
         return;
     }
 
-    static char username[16] {};
-
-    ImGui::InputText("Username", username, 16);
+    ImGui::InputText("Username", buffer_username, 16);
+    ImGui::InputText("Password", buffer_password, 16);
 
     if (ImGui::Button("Sign Up")) {
-        client.sign_up(username);
+        client.sign_up(buffer_username, buffer_password);
 
         state = State::Processing;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("I Want To Sign In")) {
+        state = State::SignIn;
     }
 }
 
 void QuickMessWindow::sign_in() {
+    if (!check_connection()) {
+        return;
+    }
 
+    ImGui::InputText("Username", buffer_username, 16);
+    ImGui::InputText("Password", buffer_password, 16);
+
+    if (ImGui::Button("Sign In")) {
+        client.sign_in(buffer_username, buffer_password);
+
+        state = State::Processing;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("I Want To Sign Up")) {
+        state = State::SignUp;
+    }
 }
 
 void QuickMessWindow::menu() {
@@ -174,6 +211,11 @@ void QuickMessWindow::process_incoming_messages() {
             case MSG_SERVER_ACCEPT_SIGN_UP:
                 std::cout << "Server accepted sign up\n";
 
+                data.username = buffer_username;
+                data.password = buffer_password;
+
+                export_user_data(data);
+
                 state = State::Menu;
 
                 break;
@@ -193,6 +235,21 @@ void QuickMessWindow::process_incoming_messages() {
                 std::cout << "Server didn't find this user\n";
 
                 break;
+            case MSG_SERVER_ACCEPT_SIGN_IN:
+                std::cout << "Server accepted sign in\n";
+
+                data.username = buffer_username;
+                data.password = buffer_password;
+
+                state = State::Menu;
+
+                break;
+            case MSG_SERVER_DENY_SIGN_IN:
+                std::cout << "Server denied sign in\n";
+
+                state = State::SignIn;
+
+                break;
             case MSG_SERVER_SENT_FROM:
                 std::cout << "Got a message\n";
 
@@ -207,6 +264,12 @@ void QuickMessWindow::process_incoming_messages() {
                 break;
         }
     }
+}
+
+bool QuickMessWindow::try_connect() {
+    client.disconnect();
+
+    return client.connect("localhost", 7021);
 }
 
 bool QuickMessWindow::check_connection() {

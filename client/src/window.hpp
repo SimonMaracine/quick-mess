@@ -3,9 +3,10 @@
 #include <string>
 
 #include <gui_base/gui_base.hpp>
+#include <common.hpp>
 
 #include "client.hpp"
-#include "chat.hpp"
+#include "data.hpp"
 
 enum class State {
     NoConnection,
@@ -33,13 +34,18 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void could_not_connect_to_server();
 
     void process_incoming_messages();
+    bool try_connect();
     bool check_connection();
 
     QuickMessClient client;
-    State state = State::SignUp;
+    State state = State::SignIn;
 
+    char buffer_username[16] {};
+    char buffer_password[16] {};
     char buffer_chat_with[16] {};
+
     std::string chat_with = "";
 
+    UserData data;
     Chat chat;
 };

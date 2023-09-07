@@ -6,13 +6,32 @@
 
 #include "client.hpp"
 
-void QuickMessClient::sign_up(const std::string& username) {
-    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_UP, 16);
+void QuickMessClient::sign_up(const std::string& username, const std::string& password) {
+    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_UP, 32);
 
     StaticCString<16> self_username;
     std::strcpy(self_username.data, username.c_str());
 
+    StaticCString<16> self_password;
+    std::strcpy(self_password.data, password.c_str());
+
     message << self_username;
+    message << self_password;
+
+    send_message(message);
+}
+
+void QuickMessClient::sign_in(const std::string& username, const std::string& password) {
+    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_IN, 32);
+
+    StaticCString<16> self_username;
+    std::strcpy(self_username.data, username.c_str());
+
+    StaticCString<16> self_password;
+    std::strcpy(self_password.data, password.c_str());
+
+    message << self_username;
+    message << self_password;
 
     send_message(message);
 }
@@ -31,15 +50,15 @@ void QuickMessClient::is_registered(const std::string& username) {
 void QuickMessClient::send_to(const std::string& username, const std::string& message_text) {
     auto message = rain_net::message(MSG_CLIENT_SEND_TO, username.size() + message_text.size());
 
-    StaticCString<16> remote_username;
-    std::strcpy(remote_username.data, username.c_str());
+    StaticCString<16> destination_username;
+    std::strcpy(destination_username.data, username.c_str());
 
-    message << remote_username;
+    message << destination_username;
 
-    StaticCString<64> remote_message_text;
-    std::strcpy(remote_message_text.data, message_text.c_str());
+    StaticCString<64> destination_text;
+    std::strcpy(destination_text.data, message_text.c_str());
 
-    message << remote_message_text;
+    message << destination_text;
 
     send_message(message);
 }
