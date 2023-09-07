@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cstring>
 #include <optional>
+#include <algorithm>
+#include <cassert>
 
 #include <gui_base/gui_base.hpp>
 #include <common.hpp>
@@ -85,6 +87,8 @@ void QuickMessWindow::sign_in() {
 
     ImGui::InputText("Username", buffer_username, MAX_USERNAME_SIZE);
 
+    ImGui::Spacing();
+
     if (ImGui::Button("Sign In")) {
         client.sign_in(buffer_username);
 
@@ -98,7 +102,7 @@ void QuickMessWindow::menu() {
     }
 
     static constexpr float CHATS_WIDTH = 150.0f;
-    static constexpr float CHAT_HEIGHT = 90.0f;
+    static constexpr float CHAT_HEIGHT = 75.0f;
     static constexpr float BUTTON_WIDTH = 100.0f;
 
     ImGui::Columns(2);
@@ -111,7 +115,7 @@ void QuickMessWindow::menu() {
 
     ImGui::Separator();
 
-    for (const auto& user : users) {
+    for (const auto& user : data.users) {
         ImGui::Text("%s", user.c_str());
     }
 
@@ -121,11 +125,11 @@ void QuickMessWindow::menu() {
 
     ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
-    ImGui::TextColored(ImVec4(0.3f, 0.2f, 0.9f, 1.0f), "Messy Chat - %s", username.c_str());
+    ImGui::TextColored(ImVec4(0.3f, 0.2f, 0.9f, 1.0f), "Messy Chat - %s", data.username.c_str());
 
     ImGui::Separator();
 
-    for (const auto& message : chat.messyges) {
+    for (const auto& message : data.chat.messyges) {
         if (message.username == std::nullopt) {
             static constexpr auto COLOR = ImVec4(0.4f, 0.25f, 0.75f, 1.0f);
 
@@ -154,7 +158,9 @@ void QuickMessWindow::menu() {
     ImGui::SameLine();
 
     if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {
-        client.messyge(username, buffer);
+        assert(!data.username.empty());
+
+        client.messyge(data.username, buffer);
         std::memset(buffer, 0, MAX_MESSYGE_SIZE);
     }
 }
@@ -162,7 +168,7 @@ void QuickMessWindow::menu() {
 void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
     std::cout << "Server accepted sign in\n";
 
-    username = buffer_username;
+    data.username = buffer_username;
 
     unsigned int user_count;
 
@@ -173,7 +179,7 @@ void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
 
         message >> username;
 
-        users.push_back(username.data);
+        data.users.push_back(username.data);
     }
 
     state = State::Menu;
@@ -186,6 +192,10 @@ void QuickMessWindow::deny_sign_in() {
 }
 
 void QuickMessWindow::messyge(rain_net::Message& message) {
+    if (state != State::Menu) {
+        return;
+    }
+
     StaticCString<MAX_MESSYGE_SIZE> source_text;
     StaticCString<MAX_USERNAME_SIZE> source_username;
 
@@ -196,21 +206,33 @@ void QuickMessWindow::messyge(rain_net::Message& message) {
     messyge.username = std::make_optional(std::string(source_username.data));
     messyge.text = source_text.data;
 
-    chat.messyges.push_back(messyge);
+    data.chat.messyges.push_back(messyge);
 }
 
 void QuickMessWindow::user_signed_in(rain_net::Message& message) {
+    if (state != State::Menu) {
+        return;
+    }
+
     StaticCString<MAX_USERNAME_SIZE> username;
     message >> username;
 
-    users.push_back(username.data);
+    data.users.push_back(username.data);
 }
 
 void QuickMessWindow::user_signed_out(rain_net::Message& message) {
+    if (state != State::Menu) {
+        return;
+    }
+
     StaticCString<MAX_USERNAME_SIZE> username;
     message >> username;
 
-    users.erase(std::find(users.cbegin(), users.cend(), std::string(username.data)));
+    // Nothing happens when there's nothing to remove
+    data.users.erase(
+        std::remove(data.users.begin(), data.users.end(), std::string(username.data)),
+        data.users.cend()
+    );
 }
 
 void QuickMessWindow::process_incoming_messages() {

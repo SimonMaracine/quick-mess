@@ -7,7 +7,7 @@ int main() {
     server.start();
 
     while (true) {
-        server.update(rain_net::Server::MAX, true);
+        server.update(rain_net::Server::MAX_MSG, true);
     }
 
     server.stop();

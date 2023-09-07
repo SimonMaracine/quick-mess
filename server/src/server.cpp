@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <stdexcept>
+#include <iostream>
 
 #include <rain_net/server.hpp>
 #include <common.hpp>
@@ -15,17 +16,20 @@ bool QuickMessServer::on_client_connected([[maybe_unused]] std::shared_ptr<rain_
 }
 
 void QuickMessServer::on_client_disconnected(std::shared_ptr<rain_net::Connection> client_connection) {
+    // The disconnected client might not be in the active_users list
+
     for (const auto& [username, user] : active_users) {
-        if (user.connection == client_connection) {
-            std::cout << "User `" << username << "` signed out\n";
-
-            const auto user = username;
-
-            active_users.erase(user);
-            notify_user_signed_out(user);
-
-            break;
+        if (user.connection->get_id() != client_connection->get_id()) {
+            continue;
         }
+
+        std::cout << "User `" << username << "` signed out\n";
+
+        notify_user_signed_out(client_connection, username);
+
+        active_users.erase(username);
+
+        break;
     }
 }
 
@@ -45,13 +49,14 @@ void QuickMessServer::accept_sign_in(std::shared_ptr<rain_net::Connection> clien
 
     for (const auto& [username, user] : active_users) {
         StaticCString<MAX_USERNAME_SIZE> c_username;
-        std::strcpy( c_username.data, username.c_str());
+        std::strcpy(c_username.data, username.c_str());
 
         message << c_username;
     }
 
     message << static_cast<unsigned int>(active_users.size());
 
+    // Send all current users including this one that we're messaging
     send_message(client_connection, message);
 }
 
@@ -69,7 +74,7 @@ void QuickMessServer::notify_user_signed_in(std::shared_ptr<rain_net::Connection
     send_message_all(message, client_connection);
 }
 
-void QuickMessServer::notify_user_signed_out(const std::string& username) {
+void QuickMessServer::notify_user_signed_out(std::shared_ptr<rain_net::Connection> client_connection, const std::string& username) {
     auto message = rain_net::message(MSG_SERVER_USER_SIGNED_OUT, MAX_USERNAME_SIZE);
 
     StaticCString<MAX_USERNAME_SIZE> c_username;
@@ -77,7 +82,7 @@ void QuickMessServer::notify_user_signed_out(const std::string& username) {
 
     message << c_username;
 
-    send_message_all(message);
+    send_message_all(message, client_connection);
 }
 
 void QuickMessServer::ask_sign_in(std::shared_ptr<rain_net::Connection> client_connection, rain_net::Message& message) {

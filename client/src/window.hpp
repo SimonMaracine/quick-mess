@@ -41,9 +41,11 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     QuickMessClient client;
     State state = State::SignIn;
 
-    char buffer_username[MAX_USERNAME_SIZE] {};
+    struct Data {
+        std::string username;
+        Chat chat;
+        std::vector<std::string> users;
+    } data;
 
-    std::string username;
-    Chat chat;
-    std::vector<std::string> users;
+    char buffer_username[MAX_USERNAME_SIZE] {};
 };

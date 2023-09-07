@@ -21,7 +21,7 @@ struct QuickMessServer : public rain_net::Server {
     void deny_sign_in(std::shared_ptr<rain_net::Connection> client_connection);
 
     void notify_user_signed_in(std::shared_ptr<rain_net::Connection> client_connection, const StaticCString<MAX_USERNAME_SIZE>& username);
-    void notify_user_signed_out(const std::string& username);
+    void notify_user_signed_out(std::shared_ptr<rain_net::Connection> client_connection, const std::string& username);
 
     void ask_sign_in(std::shared_ptr<rain_net::Connection> client_connection, rain_net::Message& message);
     void messyge(rain_net::Message& message);
