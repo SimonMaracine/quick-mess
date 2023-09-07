@@ -9,7 +9,6 @@
 
 #include "window.hpp"
 #include "client.hpp"
-#include "data.hpp"
 
 void QuickMessWindow::start() {
     if (!try_connect()) {
@@ -84,7 +83,7 @@ void QuickMessWindow::sign_in() {
         return;
     }
 
-    ImGui::InputText("Username", buffer_username, 16);
+    ImGui::InputText("Username", buffer_username, MAX_USERNAME_SIZE);
 
     if (ImGui::Button("Sign In")) {
         client.sign_in(buffer_username);
@@ -112,9 +111,9 @@ void QuickMessWindow::menu() {
 
     ImGui::Separator();
 
-    ImGui::Text("chat1");
-    ImGui::Text("chat2");
-    ImGui::Text("chat3");
+    for (const auto& user : users) {
+        ImGui::Text("%s", user.c_str());
+    }
 
     ImGui::EndChild();
 
@@ -122,7 +121,7 @@ void QuickMessWindow::menu() {
 
     ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
-    ImGui::TextColored(ImVec4(0.3f, 0.2f, 0.9f, 1.0f), "Messy Chat");
+    ImGui::TextColored(ImVec4(0.3f, 0.2f, 0.9f, 1.0f), "Messy Chat - %s", username.c_str());
 
     ImGui::Separator();
 
@@ -130,7 +129,7 @@ void QuickMessWindow::menu() {
         if (message.username == std::nullopt) {
             static constexpr auto COLOR = ImVec4(0.4f, 0.25f, 0.75f, 1.0f);
 
-            ImGui::TextColored(COLOR, "[SERVER]\n%s", message.text.c_str());
+            ImGui::TextColored(COLOR, "[SERVER]\n");
             ImGui::TextColored(COLOR, "%s", message.text.c_str());
         } else {
             ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "[%s]\n", message.username->c_str());
@@ -147,17 +146,71 @@ void QuickMessWindow::menu() {
 
     ImGui::Spacing();
 
-    static char buffer[256] {};
+    static char buffer[MAX_MESSYGE_SIZE] {};
     const auto size = ImVec2(ImGui::GetContentRegionAvail().x - BUTTON_WIDTH, ImGui::GetContentRegionAvail().y);
 
-    ImGui::InputTextMultiline("##", buffer, 256, size);
+    ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size);
 
     ImGui::SameLine();
 
     if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {
         client.messyge(username, buffer);
-        std::memset(buffer, 0, 256);
+        std::memset(buffer, 0, MAX_MESSYGE_SIZE);
     }
+}
+
+void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
+    std::cout << "Server accepted sign in\n";
+
+    username = buffer_username;
+
+    unsigned int user_count;
+
+    message >> user_count;
+
+    for (unsigned int i = 0; i < user_count; i++) {
+        StaticCString<MAX_USERNAME_SIZE> username;
+
+        message >> username;
+
+        users.push_back(username.data);
+    }
+
+    state = State::Menu;
+}
+
+void QuickMessWindow::deny_sign_in() {
+    std::cout << "Server denied sign in\n";
+
+    state = State::SignIn;
+}
+
+void QuickMessWindow::messyge(rain_net::Message& message) {
+    StaticCString<MAX_MESSYGE_SIZE> source_text;
+    StaticCString<MAX_USERNAME_SIZE> source_username;
+
+    message >> source_text;
+    message >> source_username;
+
+    Messyge messyge;
+    messyge.username = std::make_optional(std::string(source_username.data));
+    messyge.text = source_text.data;
+
+    chat.messyges.push_back(messyge);
+}
+
+void QuickMessWindow::user_signed_in(rain_net::Message& message) {
+    StaticCString<MAX_USERNAME_SIZE> username;
+    message >> username;
+
+    users.push_back(username.data);
+}
+
+void QuickMessWindow::user_signed_out(rain_net::Message& message) {
+    StaticCString<MAX_USERNAME_SIZE> username;
+    message >> username;
+
+    users.erase(std::find(users.cbegin(), users.cend(), std::string(username.data)));
 }
 
 void QuickMessWindow::process_incoming_messages() {
@@ -171,33 +224,19 @@ void QuickMessWindow::process_incoming_messages() {
 
         switch (message.id()) {
             case MSG_SERVER_ACCEPT_SIGN_IN:
-                std::cout << "Server accepted sign in\n";
-
-                username = buffer_username;
-                state = State::Menu;
-
+                accept_sign_in(message);
                 break;
             case MSG_SERVER_DENY_SIGN_IN:
-                std::cout << "Server denied sign in\n";
-
-                state = State::SignIn;
-
+                deny_sign_in();
                 break;
             case MSG_SERVER_MESSYGE:
-                StaticCString<64> source_text;
-                StaticCString<16> source_username;
-
-                message >> source_text;
-                message >> source_username;
-
-                std::cout << source_username.data << ": " << source_text.data << '\n';
-
-                Messyge messyge;
-                messyge.username = std::make_optional(std::string(source_username.data));
-                messyge.text = source_text.data;
-
-                chat.messyges.push_back(messyge);
-
+                messyge(message);
+                break;
+            case MSG_SERVER_USER_SIGNED_IN:
+                user_signed_in(message);
+                break;
+            case MSG_SERVER_USER_SIGNED_OUT:
+                user_signed_out(message);
                 break;
         }
     }

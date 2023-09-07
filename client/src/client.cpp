@@ -7,9 +7,9 @@
 #include "client.hpp"
 
 void QuickMessClient::sign_in(const std::string& username) {
-    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_IN, 16);
+    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_IN, MAX_USERNAME_SIZE);
 
-    StaticCString<16> c_username;
+    StaticCString<MAX_USERNAME_SIZE> c_username;
     std::strcpy(c_username.data, username.c_str());
 
     message << c_username;
@@ -20,10 +20,10 @@ void QuickMessClient::sign_in(const std::string& username) {
 void QuickMessClient::messyge(const std::string& username, const std::string& text) {
     auto message = rain_net::message(MSG_CLIENT_MESSYGE, username.size() + text.size());
 
-    StaticCString<16> source_username;
+    StaticCString<MAX_USERNAME_SIZE> source_username;
     std::strcpy(source_username.data, username.c_str());
 
-    StaticCString<64> source_text;
+    StaticCString<MAX_MESSYGE_SIZE> source_text;
     std::strcpy(source_text.data, text.c_str());
 
     message << source_username;

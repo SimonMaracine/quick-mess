@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
 add_executable(quick_mess_server
-    "src/data.hpp"
     "src/main.cpp"
     "src/server.cpp"
     "src/server.hpp"
