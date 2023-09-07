@@ -6,59 +6,28 @@
 
 #include "client.hpp"
 
-void QuickMessClient::sign_up(const std::string& username, const std::string& password) {
-    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_UP, 32);
+void QuickMessClient::sign_in(const std::string& username) {
+    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_IN, 16);
 
-    StaticCString<16> self_username;
-    std::strcpy(self_username.data, username.c_str());
+    StaticCString<16> c_username;
+    std::strcpy(c_username.data, username.c_str());
 
-    StaticCString<16> self_password;
-    std::strcpy(self_password.data, password.c_str());
-
-    message << self_username;
-    message << self_password;
+    message << c_username;
 
     send_message(message);
 }
 
-void QuickMessClient::sign_in(const std::string& username, const std::string& password) {
-    auto message = rain_net::message(MSG_CLIENT_ASK_SIGN_IN, 32);
+void QuickMessClient::messyge(const std::string& username, const std::string& text) {
+    auto message = rain_net::message(MSG_CLIENT_MESSYGE, username.size() + text.size());
 
-    StaticCString<16> self_username;
-    std::strcpy(self_username.data, username.c_str());
+    StaticCString<16> source_username;
+    std::strcpy(source_username.data, username.c_str());
 
-    StaticCString<16> self_password;
-    std::strcpy(self_password.data, password.c_str());
+    StaticCString<64> source_text;
+    std::strcpy(source_text.data, text.c_str());
 
-    message << self_username;
-    message << self_password;
-
-    send_message(message);
-}
-
-void QuickMessClient::is_registered(const std::string& username) {
-    auto message = rain_net::message(MSG_CLIENT_ASK_IS_REGISTERED, 16);
-
-    StaticCString<16> remote_username;
-    std::strcpy(remote_username.data, username.c_str());
-
-    message << remote_username;
-
-    send_message(message);
-}
-
-void QuickMessClient::send_to(const std::string& username, const std::string& message_text) {
-    auto message = rain_net::message(MSG_CLIENT_SEND_TO, username.size() + message_text.size());
-
-    StaticCString<16> destination_username;
-    std::strcpy(destination_username.data, username.c_str());
-
-    message << destination_username;
-
-    StaticCString<64> destination_text;
-    std::strcpy(destination_text.data, message_text.c_str());
-
-    message << destination_text;
+    message << source_username;
+    message << source_text;
 
     send_message(message);
 }

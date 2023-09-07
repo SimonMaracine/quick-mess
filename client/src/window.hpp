@@ -11,7 +11,6 @@
 enum class State {
     NoConnection,
     Processing,
-    SignUp,
     SignIn,
     Menu
 };
@@ -27,11 +26,8 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void no_connection();
     void processing();
 
-    void sign_up();
     void sign_in();
     void menu();
-
-    void could_not_connect_to_server();
 
     void process_incoming_messages();
     bool try_connect();
@@ -41,11 +37,7 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     State state = State::SignIn;
 
     char buffer_username[16] {};
-    char buffer_password[16] {};
-    char buffer_chat_with[16] {};
 
-    std::string chat_with = "";
-
-    UserData data;
+    std::string username;
     Chat chat;
 };

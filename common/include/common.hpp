@@ -3,38 +3,33 @@
 #include <cstddef>
 #include <vector>
 #include <string>
+#include <optional>
+#include <memory>
 
-#define MSG_CLIENT_ASK_SIGN_UP 0
-#define MSG_SERVER_ACCEPT_SIGN_UP 1
-#define MSG_SERVER_DENY_SIGN_UP 2
+#include <rain_net/connection.hpp>
 
-#define MSG_CLIENT_ASK_IS_REGISTERED 3
-#define MSG_SERVER_POSITIVE_IS_REGISTERED 4
-#define MSG_SERVER_NEGATIVE_IS_REGISTERED 5
+#define MSG_CLIENT_ASK_SIGN_IN 1
+#define MSG_SERVER_ACCEPT_SIGN_IN 2
+#define MSG_SERVER_DENY_SIGN_IN 3
 
-#define MSG_CLIENT_ASK_SIGN_IN 6
-#define MSG_SERVER_ACCEPT_SIGN_IN 7
-#define MSG_SERVER_DENY_SIGN_IN 8
-
-#define MSG_CLIENT_SEND_TO 10
-#define MSG_SERVER_SENT_FROM 20
+#define MSG_CLIENT_MESSYGE 10
+#define MSG_SERVER_MESSYGE 20
 
 template<std::size_t Size>
 struct StaticCString {
     char data[Size];
 };
 
-struct Message {
-    std::string source_username;
-    std::string destination_username;
+struct User {
+    std::string username;
+    std::shared_ptr<rain_net::Connection> connection;
+};
 
+struct Messyge {
+    std::optional<std::string> username;
     std::string text;
-    bool remote {};
 };
 
 struct Chat {
-    std::string self_username;
-    std::string remote_username;
-
-    std::vector<Message> messages;
+    std::vector<Messyge> messyges;
 };
