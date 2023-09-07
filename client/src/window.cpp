@@ -85,7 +85,13 @@ void QuickMessWindow::sign_in() {
         return;
     }
 
+    ImGui::TextColored(BLUEISH, "Connected to the server!");
+
+    ImGui::Spacing();
+
+    ImGui::PushItemWidth(175.0f);
     ImGui::InputText("Username", buffer_username, MAX_USERNAME_SIZE);
+    ImGui::PopItemWidth();
 
     ImGui::Spacing();
 
@@ -102,49 +108,16 @@ void QuickMessWindow::menu() {
     }
 
     static constexpr float CHATS_WIDTH = 150.0f;
-    static constexpr float CHAT_HEIGHT = 75.0f;
     static constexpr float BUTTON_WIDTH = 100.0f;
 
     ImGui::Columns(2);
-
     ImGui::SetColumnWidth(0, CHATS_WIDTH);
 
-    ImGui::BeginChild("Chats", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
-
-    ImGui::Text("Active Users");
-
-    ImGui::Separator();
-
-    for (const auto& user : data.users) {
-        ImGui::Text("%s", user.c_str());
-    }
-
-    ImGui::EndChild();
+    menu_users();
 
     ImGui::NextColumn();
 
-    ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
-
-    ImGui::TextColored(ImVec4(0.3f, 0.2f, 0.9f, 1.0f), "Messy Chat - %s", data.username.c_str());
-
-    ImGui::Separator();
-
-    for (const auto& message : data.chat.messyges) {
-        if (message.username == std::nullopt) {
-            static constexpr auto COLOR = ImVec4(0.4f, 0.25f, 0.75f, 1.0f);
-
-            ImGui::TextColored(COLOR, "[SERVER]\n");
-            ImGui::TextColored(COLOR, "%s", message.text.c_str());
-        } else {
-            ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "[%s]\n", message.username->c_str());
-            ImGui::Text("%s", message.text.c_str());
-        }
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-    }
-
-    ImGui::EndChild();
+    menu_messages();
 
     ImGui::Columns(1);
 
@@ -163,6 +136,51 @@ void QuickMessWindow::menu() {
         client.messyge(data.username, buffer);
         std::memset(buffer, 0, MAX_MESSYGE_SIZE);
     }
+}
+
+void QuickMessWindow::menu_users() {
+    ImGui::BeginChild("Users", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
+
+    ImGui::Text("Active Users");
+    ImGui::Separator();
+
+    ImGui::BeginChild("UsersInner");
+
+    for (const auto& user : data.users) {
+        ImGui::Text("%s", user.c_str());
+    }
+
+    ImGui::EndChild();
+
+    ImGui::EndChild();
+}
+
+void QuickMessWindow::menu_messages() {
+    ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
+
+    ImGui::TextColored(BLUEISH, "Messy Chat - %s", data.username.c_str());
+    ImGui::Separator();
+
+    ImGui::BeginChild("ChatInner");
+
+    for (const auto& message : data.chat.messyges) {
+        if (message.username == std::nullopt) {
+            static constexpr auto COLOR = ImVec4(0.4f, 0.25f, 0.75f, 1.0f);
+
+            ImGui::TextColored(COLOR, "[SERVER]\n");
+            ImGui::TextColored(COLOR, "%s", message.text.c_str());
+        } else {
+            ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]\n", message.username->c_str());
+            ImGui::Text("%s", message.text.c_str());
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+    }
+
+    ImGui::EndChild();
+
+    ImGui::EndChild();
 }
 
 void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
@@ -273,6 +291,9 @@ bool QuickMessWindow::try_connect() {
 bool QuickMessWindow::check_connection() {
     if (!client.is_connected()) {
         state = State::NoConnection;
+
+        // Must clear all data
+        data = {};
 
         return false;
     }

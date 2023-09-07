@@ -28,6 +28,9 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void sign_in();
     void menu();
 
+    void menu_users();
+    void menu_messages();
+
     void accept_sign_in(rain_net::Message& message);
     void deny_sign_in();
     void messyge(rain_net::Message& message);
@@ -48,4 +51,7 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     } data;
 
     char buffer_username[MAX_USERNAME_SIZE] {};
+
+    static constexpr float CHAT_HEIGHT = 75.0f;
+    static constexpr ImVec4 BLUEISH = ImVec4(0.5f, 0.4f, 1.0f, 1.0f);
 };
