@@ -34,8 +34,10 @@ struct User {
 struct Messyge {
     std::optional<std::string> username;
     std::string text;
+    unsigned int index {};
 };
 
 struct Chat {
     std::vector<Messyge> messyges;
+    unsigned int index_counter = 0;
 };

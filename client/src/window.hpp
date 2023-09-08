@@ -53,5 +53,5 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     char buffer_username[MAX_USERNAME_SIZE] {};
 
     static constexpr float CHAT_HEIGHT = 75.0f;
-    static constexpr ImVec4 BLUEISH = ImVec4(0.5f, 0.4f, 1.0f, 1.0f);
+    static constexpr ImVec4 BLUEISH = ImVec4(0.6f, 0.5f, 1.0f, 1.0f);
 };

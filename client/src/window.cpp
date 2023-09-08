@@ -25,7 +25,7 @@ void QuickMessWindow::update() {
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 20.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(22.0f, 22.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
     const ImGuiWindowFlags flags = (
@@ -96,9 +96,13 @@ void QuickMessWindow::sign_in() {
     ImGui::Spacing();
 
     if (ImGui::Button("Sign In")) {
-        client.sign_in(buffer_username);
+        if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
+            client.sign_in(buffer_username);
 
-        state = State::Processing;
+            state = State::Processing;
+        } else {
+            std::cout << "Invalid username\n";
+        }
     }
 }
 
@@ -165,7 +169,7 @@ void QuickMessWindow::menu_messages() {
 
     for (const auto& message : data.chat.messyges) {
         if (message.username == std::nullopt) {
-            static constexpr auto COLOR = ImVec4(0.4f, 0.25f, 0.75f, 1.0f);
+            static constexpr auto COLOR = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
 
             ImGui::TextColored(COLOR, "[SERVER]\n");
             ImGui::TextColored(COLOR, "%s", message.text.c_str());
@@ -176,6 +180,11 @@ void QuickMessWindow::menu_messages() {
 
         ImGui::Spacing();
         ImGui::Spacing();
+
+        // Automatically scroll to the bottom
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 2.0f) {
+            ImGui::SetScrollHereY(1.0f);
+        }
     }
 
     ImGui::EndChild();
@@ -214,17 +223,30 @@ void QuickMessWindow::messyge(rain_net::Message& message) {
         return;
     }
 
-    StaticCString<MAX_MESSYGE_SIZE> source_text;
-    StaticCString<MAX_USERNAME_SIZE> source_username;
+    unsigned int index;
+    StaticCString<MAX_MESSYGE_SIZE> text;
+    StaticCString<MAX_USERNAME_SIZE> username;
 
-    message >> source_text;
-    message >> source_username;
+    message >> index;
+    message >> text;
+    message >> username;
 
     Messyge messyge;
-    messyge.username = std::make_optional(std::string(source_username.data));
-    messyge.text = source_text.data;
+
+    if (std::strcmp(username.data, "SERVER") == 0) {
+        messyge.username = std::nullopt;
+    } else {
+        messyge.username = std::make_optional(std::string(username.data));
+    }
+
+    messyge.text = text.data;
+    messyge.index = index;
 
     data.chat.messyges.push_back(messyge);
+
+    std::sort(data.chat.messyges.begin(), data.chat.messyges.end(), [](const Messyge& lhs, const Messyge& rhs) {
+        return lhs.index < rhs.index;
+    });
 }
 
 void QuickMessWindow::user_signed_in(rain_net::Message& message) {

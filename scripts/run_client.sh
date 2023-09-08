@@ -2,7 +2,7 @@
 
 clear
 cd ../build
-cmake --build . -j 8
+cmake --build . -j 8 --target quick_mess
 
 if [ "$?" -ne 0 ]; then
     exit 1
