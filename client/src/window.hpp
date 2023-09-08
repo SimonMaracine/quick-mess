@@ -36,10 +36,13 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void messyge(rain_net::Message& message);
     void user_signed_in(rain_net::Message& message);
     void user_signed_out(rain_net::Message& message);
+    void offer_more_chat(rain_net::Message& message);
 
     void process_incoming_messages();
     bool try_connect();
     bool check_connection();
+    void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
+    void sort_messages();
 
     QuickMessClient client;
     State state = State::SignIn;

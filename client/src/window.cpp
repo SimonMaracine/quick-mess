@@ -97,7 +97,7 @@ void QuickMessWindow::sign_in() {
 
     if (ImGui::Button("Sign In")) {
         if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
-            client.sign_in(buffer_username);
+            client.ask_sign_in(buffer_username);
 
             state = State::Processing;
         } else {
@@ -111,11 +111,11 @@ void QuickMessWindow::menu() {
         return;
     }
 
-    static constexpr float CHATS_WIDTH = 150.0f;
+    static constexpr float USERS_WIDTH = 175.0f;
     static constexpr float BUTTON_WIDTH = 100.0f;
 
     ImGui::Columns(2);
-    ImGui::SetColumnWidth(0, CHATS_WIDTH);
+    ImGui::SetColumnWidth(0, USERS_WIDTH);
 
     menu_users();
 
@@ -163,6 +163,17 @@ void QuickMessWindow::menu_messages() {
     ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
     ImGui::TextColored(BLUEISH, "Messy Chat - %s", data.username.c_str());
+
+    ImGui::SameLine();
+
+    if (ImGui::SmallButton("Load More Chat")) {
+        unsigned int first_index = data.chat.messyges.at(0).index;
+
+        if (first_index > 0) {
+            client.ask_more_chat(first_index);
+        }
+    }
+
     ImGui::Separator();
 
     ImGui::BeginChild("ChatInner");
@@ -182,7 +193,7 @@ void QuickMessWindow::menu_messages() {
         ImGui::Spacing();
 
         // Automatically scroll to the bottom
-        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 2.0f) {
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 5.0f) {
             ImGui::SetScrollHereY(1.0f);
         }
     }
@@ -198,12 +209,10 @@ void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
     data.username = buffer_username;
 
     unsigned int user_count;
-
     message >> user_count;
 
     for (unsigned int i = 0; i < user_count; i++) {
         StaticCString<MAX_USERNAME_SIZE> username;
-
         message >> username;
 
         data.users.push_back(username.data);
@@ -231,22 +240,8 @@ void QuickMessWindow::messyge(rain_net::Message& message) {
     message >> text;
     message >> username;
 
-    Messyge messyge;
-
-    if (std::strcmp(username.data, "SERVER") == 0) {
-        messyge.username = std::nullopt;
-    } else {
-        messyge.username = std::make_optional(std::string(username.data));
-    }
-
-    messyge.text = text.data;
-    messyge.index = index;
-
-    data.chat.messyges.push_back(messyge);
-
-    std::sort(data.chat.messyges.begin(), data.chat.messyges.end(), [](const Messyge& lhs, const Messyge& rhs) {
-        return lhs.index < rhs.index;
-    });
+    add_messyge_to_chat(username.data, text.data, index);
+    sort_messages();
 }
 
 void QuickMessWindow::user_signed_in(rain_net::Message& message) {
@@ -275,6 +270,29 @@ void QuickMessWindow::user_signed_out(rain_net::Message& message) {
     );
 }
 
+void QuickMessWindow::offer_more_chat(rain_net::Message& message) {
+    if (state != State::Menu) {
+        return;
+    }
+
+    unsigned int count;
+    message >> count;
+
+    for (unsigned int i = 0; i < count; i++) {
+        unsigned int index;
+        StaticCString<MAX_MESSYGE_SIZE> text;
+        StaticCString<MAX_USERNAME_SIZE> username;
+
+        message >> index;
+        message >> text;
+        message >> username;
+
+        add_messyge_to_chat(username.data, text.data, index);
+    }
+
+    sort_messages();
+}
+
 void QuickMessWindow::process_incoming_messages() {
     while (true) {
         auto result = client.next_incoming_message();
@@ -300,6 +318,9 @@ void QuickMessWindow::process_incoming_messages() {
             case MSG_SERVER_USER_SIGNED_OUT:
                 user_signed_out(message);
                 break;
+            case MSG_SERVER_OFFER_MORE_CHAT:
+                offer_more_chat(message);
+                break;
         }
     }
 }
@@ -321,4 +342,25 @@ bool QuickMessWindow::check_connection() {
     }
 
     return true;
+}
+
+void QuickMessWindow::add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index) {
+    Messyge messyge;
+
+    if (username == "SERVER") {
+        messyge.username = std::nullopt;
+    } else {
+        messyge.username = std::make_optional(username);
+    }
+
+    messyge.text = text;
+    messyge.index = index;
+
+    data.chat.messyges.push_back(messyge);
+}
+
+void QuickMessWindow::sort_messages() {
+    std::sort(data.chat.messyges.begin(), data.chat.messyges.end(), [](const Messyge& lhs, const Messyge& rhs) {
+        return lhs.index < rhs.index;
+    });
 }

@@ -22,12 +22,15 @@ struct QuickMessServer : public rain_net::Server {
     void accept_sign_in(std::shared_ptr<rain_net::Connection> client_connection);
     void deny_sign_in(std::shared_ptr<rain_net::Connection> client_connection);
 
-    void notify_user_signed_in(std::shared_ptr<rain_net::Connection> client_connection, const StaticCString<MAX_USERNAME_SIZE>& username);
-    void notify_user_signed_out(const std::string& username);
+    void user_signed_in(std::shared_ptr<rain_net::Connection> client_connection, const StaticCString<MAX_USERNAME_SIZE>& username);
+    void user_signed_out(const std::string& username);
+
+    void offer_more_chat(std::shared_ptr<rain_net::Connection> client_connection, unsigned int from_index);
 
     void messyge(const std::string& text);
 
     void ask_sign_in(std::shared_ptr<rain_net::Connection> client_connection, rain_net::Message& message);
+    void ask_more_chat(std::shared_ptr<rain_net::Connection> client_connection, rain_net::Message& message);
     void messyge(rain_net::Message& message);
 
     void add_messyge_to_chat(const std::string& username, const std::string& text);
