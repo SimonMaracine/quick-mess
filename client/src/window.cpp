@@ -114,16 +114,24 @@ void QuickMessWindow::menu() {
     static constexpr float USERS_WIDTH = 175.0f;
     static constexpr float BUTTON_WIDTH = 100.0f;
 
-    ImGui::Columns(2);
-    ImGui::SetColumnWidth(0, USERS_WIDTH);
+    {
+        ImGui::BeginTable("MenuLayout", 2, ImGuiTableFlags_BordersInnerV);
 
-    menu_users();
+        ImGui::TableSetupColumn("MenuColumn1", ImGuiTableColumnFlags_WidthFixed, USERS_WIDTH);
+        ImGui::TableSetupColumn("MenuColumn2", ImGuiTableColumnFlags_None);
 
-    ImGui::NextColumn();
+        ImGui::TableNextRow();
 
-    menu_messages();
+        ImGui::TableNextColumn();
 
-    ImGui::Columns(1);
+        menu_users();
+
+        ImGui::TableNextColumn();
+
+        menu_messages();
+
+        ImGui::EndTable();
+    }
 
     ImGui::Spacing();
 
@@ -148,13 +156,15 @@ void QuickMessWindow::menu_users() {
     ImGui::Text("Active Users");
     ImGui::Separator();
 
-    ImGui::BeginChild("UsersInner");
+    {
+        ImGui::BeginChild("UsersInner");
 
-    for (const auto& user : data.users) {
-        ImGui::Text("%s", user.c_str());
+        for (const auto& user : data.users) {
+            ImGui::Text("%s", user.c_str());
+        }
+
+        ImGui::EndChild();
     }
-
-    ImGui::EndChild();
 
     ImGui::EndChild();
 }
@@ -164,41 +174,48 @@ void QuickMessWindow::menu_messages() {
 
     ImGui::TextColored(BLUEISH, "Messy Chat - %s", data.username.c_str());
 
-    ImGui::SameLine();
-
-    if (ImGui::SmallButton("Load More Chat")) {
-        unsigned int first_index = data.chat.messyges.at(0).index;
-
-        if (first_index > 0) {
-            client.ask_more_chat(first_index);
-        }
-    }
-
     ImGui::Separator();
 
-    ImGui::BeginChild("ChatInner");
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f));
 
-    for (const auto& message : data.chat.messyges) {
-        if (message.username == std::nullopt) {
-            static constexpr auto COLOR = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
+    {
+        ImGui::BeginChild("ChatInner", {}, false, ImGuiWindowFlags_AlwaysUseWindowPadding);
 
-            ImGui::TextColored(COLOR, "[SERVER]\n");
-            ImGui::TextColored(COLOR, "%s", message.text.c_str());
-        } else {
-            ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]\n", message.username->c_str());
-            ImGui::Text("%s", message.text.c_str());
+        if (ImGui::Button("Load More")) {
+            const unsigned int first_index = data.chat.messyges.at(0).index;
+
+            if (first_index > 0) {
+                client.ask_more_chat(first_index);
+            }
         }
 
         ImGui::Spacing();
         ImGui::Spacing();
 
-        // Automatically scroll to the bottom
-        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 5.0f) {
-            ImGui::SetScrollHereY(1.0f);
+        for (const auto& message : data.chat.messyges) {
+            if (message.username == std::nullopt) {
+                static constexpr auto COLOR = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
+
+                ImGui::TextColored(COLOR, "[SERVER]\n");
+                ImGui::TextColored(COLOR, "%s", message.text.c_str());
+            } else {
+                ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]\n", message.username->c_str());
+                ImGui::Text("%s", message.text.c_str());
+            }
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            // Automatically scroll to the bottom
+            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 5.0f) {
+                ImGui::SetScrollHereY(1.0f);
+            }
         }
+
+        ImGui::EndChild();
     }
 
-    ImGui::EndChild();
+    ImGui::PopStyleVar();
 
     ImGui::EndChild();
 }
