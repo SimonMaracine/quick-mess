@@ -169,7 +169,7 @@ void QuickMessServer::ask_more_chat(std::shared_ptr<rain_net::Connection> client
 
     offer_more_chat(client_connection, from_index);
 
-    std::cout << "A user asked for more chat from index `" << from_index << "`\n";
+    std::cout << "Offered more chat to user `" << client_connection->get_id() << "` from index `" << from_index << "`\n";
 }
 
 void QuickMessServer::messyge(rain_net::Message& message) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <optional>
@@ -23,6 +24,8 @@
 
 inline constexpr std::size_t MAX_USERNAME_SIZE = 16;
 inline constexpr std::size_t MAX_MESSYGE_SIZE = 256;
+
+inline constexpr std::uint16_t PORT = 7021;
 
 template<std::size_t Size>
 struct StaticCString {

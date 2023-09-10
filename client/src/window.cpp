@@ -11,6 +11,7 @@
 
 #include "window.hpp"
 #include "client.hpp"
+#include "data.hpp"
 
 void QuickMessWindow::start() {
     if (!try_connect()) {
@@ -181,11 +182,13 @@ void QuickMessWindow::menu_messages() {
     {
         ImGui::BeginChild("ChatInner", {}, false, ImGuiWindowFlags_AlwaysUseWindowPadding);
 
-        if (ImGui::Button("Load More")) {
-            const unsigned int first_index = data.chat.messyges.at(0).index;
+        if (!data.chat.messyges.empty() && data.chat.messyges.at(0).index > 0) {
+            if (ImGui::Button("Load More")) {
+                const unsigned int first_index = data.chat.messyges.at(0).index;
 
-            if (first_index > 0) {
-                client.ask_more_chat(first_index);
+                if (first_index > 0) {
+                    client.ask_more_chat(first_index);
+                }
             }
         }
 
@@ -345,7 +348,19 @@ void QuickMessWindow::process_incoming_messages() {
 bool QuickMessWindow::try_connect() {
     client.disconnect();
 
-    return client.connect("localhost", 7021);
+    std::string address;
+
+    if (!load_host_address(address)) {
+        std::cout << "Could not load host address from file\n";
+
+        if (!create_host_address_file()) {
+            std::cout << "Could not create host address file\n";
+        }
+
+        address = "localhost";
+    }
+
+    return client.connect(address, PORT);
 }
 
 bool QuickMessWindow::check_connection() {

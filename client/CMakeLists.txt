@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.20)
 add_executable(quick_mess
     "src/client.cpp"
     "src/client.hpp"
+    "src/data.cpp"
+    "src/data.hpp"
     "src/main.cpp"
     "src/window.cpp"
     "src/window.hpp"

@@ -1,8 +1,9 @@
 #include <iostream>
 #include <cstdlib>
-#include <signal.h>
+#include <signal.h>  // Linux only
 
 #include <rain_net/server.hpp>
+#include <common.hpp>
 
 #include "server.hpp"
 #include "chat.hpp"
@@ -29,7 +30,7 @@ int main() {
         std::exit(1);
     }
 
-    QuickMessServer server {7021};
+    QuickMessServer server {PORT};
 
     {
         SavedChat saved_chat;

@@ -30,7 +30,7 @@ bool load_chat(SavedChat& saved_chat) {
         }
 
         saved_chat.chat.index_counter = root["index_counter"].get<unsigned int>();
-    } catch (const nlohmann::json::exception& e) {
+    } catch (const nlohmann::json::exception&) {
         return false;
     }
 
