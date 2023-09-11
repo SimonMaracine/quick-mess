@@ -38,14 +38,17 @@ void QuickMessWindow::update() {
         case State::NoConnection:
             no_connection();
             break;
-        case State::Processing:
-            processing();
+        case State::Connecting:
+            connecting();
             break;
         case State::SignIn:
             sign_in();
             break;
-        case State::Menu:
-            menu();
+        case State::Processing:
+            processing();
+            break;
+        case State::Chat:
+            chat();
             break;
     }
     ImGui::End();
@@ -73,12 +76,18 @@ void QuickMessWindow::no_connection() {
     }
 }
 
-void QuickMessWindow::processing() {
+void QuickMessWindow::connecting() {
     if (!check_connection()) {
         return;
     }
 
-    ImGui::Text("Processing... Please wait.");
+    if (connection_flag) {
+        state = State::SignIn;
+
+        connection_flag = false;
+    }
+
+    ImGui::Text("Connecting... Please wait.");
 }
 
 void QuickMessWindow::sign_in() {
@@ -107,7 +116,15 @@ void QuickMessWindow::sign_in() {
     }
 }
 
-void QuickMessWindow::menu() {
+void QuickMessWindow::processing() {
+    if (!check_connection()) {
+        return;
+    }
+
+    ImGui::Text("Processing... Please wait.");
+}
+
+void QuickMessWindow::chat() {
     if (!check_connection()) {
         return;
     }
@@ -125,11 +142,11 @@ void QuickMessWindow::menu() {
 
         ImGui::TableNextColumn();
 
-        menu_users();
+        chat_users();
 
         ImGui::TableNextColumn();
 
-        menu_messages();
+        chat_messages();
 
         ImGui::EndTable();
     }
@@ -151,7 +168,7 @@ void QuickMessWindow::menu() {
     }
 }
 
-void QuickMessWindow::menu_users() {
+void QuickMessWindow::chat_users() {
     ImGui::BeginChild("Users", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
     ImGui::Text("Active Users");
@@ -170,7 +187,7 @@ void QuickMessWindow::menu_users() {
     ImGui::EndChild();
 }
 
-void QuickMessWindow::menu_messages() {
+void QuickMessWindow::chat_messages() {
     ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
     ImGui::TextColored(BLUEISH, "Messy Chat - %s", data.username.c_str());
@@ -238,7 +255,7 @@ void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
         data.users.push_back(username.data);
     }
 
-    state = State::Menu;
+    state = State::Chat;
 }
 
 void QuickMessWindow::deny_sign_in() {
@@ -248,7 +265,7 @@ void QuickMessWindow::deny_sign_in() {
 }
 
 void QuickMessWindow::messyge(rain_net::Message& message) {
-    if (state != State::Menu) {
+    if (state != State::Chat) {
         return;
     }
 
@@ -265,7 +282,7 @@ void QuickMessWindow::messyge(rain_net::Message& message) {
 }
 
 void QuickMessWindow::user_signed_in(rain_net::Message& message) {
-    if (state != State::Menu) {
+    if (state != State::Chat) {
         return;
     }
 
@@ -276,7 +293,7 @@ void QuickMessWindow::user_signed_in(rain_net::Message& message) {
 }
 
 void QuickMessWindow::user_signed_out(rain_net::Message& message) {
-    if (state != State::Menu) {
+    if (state != State::Chat) {
         return;
     }
 
@@ -291,7 +308,7 @@ void QuickMessWindow::user_signed_out(rain_net::Message& message) {
 }
 
 void QuickMessWindow::offer_more_chat(rain_net::Message& message) {
-    if (state != State::Menu) {
+    if (state != State::Chat) {
         return;
     }
 
@@ -360,7 +377,11 @@ bool QuickMessWindow::try_connect() {
         address = "localhost";
     }
 
-    return client.connect(address, PORT);
+    const bool result = client.connect(address, PORT, [this]() {
+        connection_flag = true;
+    });
+
+    return result;
 }
 
 bool QuickMessWindow::check_connection() {

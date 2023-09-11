@@ -10,9 +10,10 @@
 
 enum class State {
     NoConnection,
-    Processing,
+    Connecting,
     SignIn,
-    Menu
+    Processing,
+    Chat
 };
 
 struct QuickMessWindow : public gui_base::GuiApplication {
@@ -24,12 +25,13 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     virtual void dispose() override;
 
     void no_connection();
-    void processing();
+    void connecting();
     void sign_in();
-    void menu();
+    void processing();
+    void chat();
 
-    void menu_users();
-    void menu_messages();
+    void chat_users();
+    void chat_messages();
 
     void accept_sign_in(rain_net::Message& message);
     void deny_sign_in();
@@ -45,7 +47,8 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void sort_messages();
 
     QuickMessClient client;
-    State state = State::SignIn;
+    State state = State::Connecting;
+    bool connection_flag = false;
 
     struct Data {
         std::string username;
