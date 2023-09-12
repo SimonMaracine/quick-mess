@@ -8,4 +8,7 @@ add_subdirectory(extern/tiny-gui-base)
 
 add_subdirectory(common)
 add_subdirectory(client)
-add_subdirectory(server)
+
+if(UNIX)
+    add_subdirectory(server)
+endif()
