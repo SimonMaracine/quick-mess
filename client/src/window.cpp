@@ -68,7 +68,7 @@ void QuickMessWindow::no_connection() {
     ImGui::Spacing();
 
     if (ImGui::Button("Try To Reconnect")) {
-        state = State::SignIn;
+        state = State::Connecting;
 
         if (!try_connect()) {
             state = State::NoConnection;
@@ -130,7 +130,7 @@ void QuickMessWindow::chat() {
     }
 
     static constexpr float USERS_WIDTH = 175.0f;
-    static constexpr float BUTTON_WIDTH = 100.0f;
+    static constexpr float BUTTON_WIDTH = 110.0f;
 
     {
         ImGui::BeginTable("MenuLayout", 2, ImGuiTableFlags_BordersInnerV);
