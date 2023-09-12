@@ -223,7 +223,7 @@ void QuickMessWindow::chat_messages() {
                 ImGui::TextColored(COLOR, "%s", message.text.c_str());
             } else {
                 ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]\n", message.username->c_str());
-                ImGui::Text("%s", message.text.c_str());
+                ImGui::TextWrapped("%s", message.text.c_str());
             }
 
             ImGui::Spacing();
