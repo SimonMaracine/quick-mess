@@ -14,6 +14,9 @@
 #include "data.hpp"
 
 void QuickMessWindow::start() {
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+
     if (!try_connect()) {
         state = State::NoConnection;
     }

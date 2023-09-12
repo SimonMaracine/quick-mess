@@ -22,5 +22,3 @@ endif()
 
 target_compile_features(quick_mess PRIVATE cxx_std_17)
 set_target_properties(quick_mess PROPERTIES CXX_EXTENSIONS OFF)
-
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
