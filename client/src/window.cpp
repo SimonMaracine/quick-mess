@@ -4,6 +4,7 @@
 #include <optional>
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 
 #include <gui_base/gui_base.hpp>
 #include <common.hpp>
@@ -444,10 +445,11 @@ unsigned int QuickMessWindow::load_dpi() {
 }
 
 void QuickMessWindow::create_sized_fonts(unsigned int scale) {
-    const char* FONT_FILE = "LiberationMono-Regular.ttf";
+    const char* FONT_FILE = "LiberationMono-Regular.ttf";\
+    const float SCALE = std::floor(13.0f * static_cast<float>(scale));
 
     ImGuiIO& io = ImGui::GetIO();
-    io.FontDefault = io.Fonts->AddFontFromFileTTF(FONT_FILE, 13.0f * static_cast<float>(scale));
+    io.FontDefault = io.Fonts->AddFontFromFileTTF(FONT_FILE, SCALE);
     io.Fonts->Build();
 }
 
