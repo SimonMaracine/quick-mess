@@ -2,5 +2,10 @@
 
 #include <string>
 
-bool load_host_address(std::string& address);
-bool create_host_address_file();
+struct DataFile {
+    std::string host_address;
+    unsigned int dpi_scale = 1;
+};
+
+bool load_data_file(DataFile& data);
+bool create_data_file();

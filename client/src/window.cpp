@@ -14,6 +14,14 @@
 #include "data.hpp"
 
 void QuickMessWindow::start() {
+    const unsigned int dpi = load_dpi();
+    create_sized_fonts(dpi);
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(static_cast<float>(dpi));
+
+    CHAT_HEIGHT = rem(8.0f);
+
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
 
@@ -36,6 +44,8 @@ void QuickMessWindow::update() {
         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
     );
 
+    CHAT_HEIGHT = rem(8.0f);
+
     ImGui::Begin("Main", nullptr, flags);
     switch (state) {
         case State::NoConnection:
@@ -57,8 +67,6 @@ void QuickMessWindow::update() {
     ImGui::End();
 
     ImGui::PopStyleVar(2);
-
-    // ImGui::ShowDemoWindow();
 }
 
 void QuickMessWindow::dispose() {
@@ -102,7 +110,7 @@ void QuickMessWindow::sign_in() {
 
     ImGui::Spacing();
 
-    ImGui::PushItemWidth(175.0f);
+    ImGui::PushItemWidth(rem(13.5f));
     ImGui::InputText("Username", buffer_username, MAX_USERNAME_SIZE);
     ImGui::PopItemWidth();
 
@@ -132,8 +140,8 @@ void QuickMessWindow::chat() {
         return;
     }
 
-    static constexpr float USERS_WIDTH = 175.0f;
-    static constexpr float BUTTON_WIDTH = 110.0f;
+    const float USERS_WIDTH = rem(13.5f);
+    const float BUTTON_WIDTH = rem(8.5f);
 
     {
         ImGui::BeginTable("MenuLayout", 2, ImGuiTableFlags_BordersInnerV);
@@ -368,19 +376,19 @@ void QuickMessWindow::process_incoming_messages() {
 bool QuickMessWindow::try_connect() {
     client.disconnect();
 
-    std::string address;
+    DataFile data_file;
 
-    if (!load_host_address(address)) {
+    if (!load_data_file(data_file)) {
         std::cout << "Could not load host address from file\n";
 
-        if (!create_host_address_file()) {
-            std::cout << "Could not create host address file\n";
+        if (!create_data_file()) {
+            std::cout << "Could not create data file\n";
         }
 
-        address = "localhost";
+        data_file.host_address = "localhost";
     }
 
-    const bool result = client.connect(address, PORT, [this]() {
+    const bool result = client.connect(data_file.host_address, PORT, [this]() {
         connection_flag = true;
     });
 
@@ -419,4 +427,30 @@ void QuickMessWindow::sort_messages() {
     std::sort(data.chat.messyges.begin(), data.chat.messyges.end(), [](const Messyge& lhs, const Messyge& rhs) {
         return lhs.index < rhs.index;
     });
+}
+
+unsigned int QuickMessWindow::load_dpi() {
+    DataFile data_file;
+
+    if (!load_data_file(data_file)) {
+        std::cout << "Could not load DPI scale from file\n";
+
+        if (!create_data_file()) {
+            std::cout << "Could not create data file\n";
+        }
+    }
+
+    return std::max(std::min(data_file.dpi_scale, 3u), 1u);
+}
+
+void QuickMessWindow::create_sized_fonts(unsigned int scale) {
+    const char* FONT_FILE = "LiberationMono-Regular.ttf";
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.FontDefault = io.Fonts->AddFontFromFileTTF(FONT_FILE, 13.0f * static_cast<float>(scale));
+    io.Fonts->Build();
+}
+
+float QuickMessWindow::rem(float size) {
+    return ImGui::GetFontSize() * size;
 }

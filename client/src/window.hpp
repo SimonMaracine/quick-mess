@@ -45,6 +45,9 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     bool check_connection();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
     void sort_messages();
+    unsigned int load_dpi();
+    void create_sized_fonts(unsigned int scale);
+    static float rem(float size);
 
     QuickMessClient client;
     State state = State::Connecting;
@@ -58,6 +61,6 @@ struct QuickMessWindow : public gui_base::GuiApplication {
 
     char buffer_username[MAX_USERNAME_SIZE] {};
 
-    static constexpr float CHAT_HEIGHT = 75.0f;
+    float CHAT_HEIGHT {};
     static constexpr ImVec4 BLUEISH = ImVec4(0.6f, 0.5f, 1.0f, 1.0f);
 };

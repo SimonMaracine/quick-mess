@@ -7,7 +7,7 @@
 
 static const char* FILE_NAME = "quick_mess.json";
 
-bool load_host_address(std::string& address) {
+bool load_data_file(DataFile& data) {
     std::ifstream file {FILE_NAME};
 
     if (!file.is_open()) {
@@ -17,7 +17,8 @@ bool load_host_address(std::string& address) {
     nlohmann::json root = nlohmann::json::parse(file);
 
     try {
-        address = root["address"].get<std::string>();
+        data.host_address = root["address"].get<std::string>();
+        data.dpi_scale = root["dpi_scale"].get<unsigned int>();
     } catch (const nlohmann::json::exception&) {
         return false;
     }
@@ -25,7 +26,7 @@ bool load_host_address(std::string& address) {
     return true;
 }
 
-bool create_host_address_file() {
+bool create_data_file() {
     std::ofstream file {FILE_NAME};
 
     if (!file.is_open()) {
@@ -34,6 +35,7 @@ bool create_host_address_file() {
 
     nlohmann::json root;
     root["address"] = "";
+    root["dpi_scale"] = 1;
 
     file << root.dump(2);
 
