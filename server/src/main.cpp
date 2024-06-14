@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cstdlib>
-#include <signal.h>  // Linux only
+#include <csignal>
 
 #include <rain_net/server.hpp>
 #include <common.hpp>
@@ -8,29 +8,19 @@
 #include "server.hpp"
 #include "chat.hpp"
 
-static volatile bool running = true;
-
-bool setup_signal_handler() {
-    struct sigaction sa {};
-
-    sa.sa_handler = [](int) {
-        running = false;
-    };
-
-    if (sigaction(SIGINT, &sa, nullptr) < 0) {
-        return false;
-    }
-
-    return true;
-}
+static volatile bool running {true};
 
 int main() {
-    if (!setup_signal_handler()) {
-        std::cout << "Could not setup signal handler\n";
+    const auto handler {
+        [](int) { running = false; }
+    };
+
+    if (std::signal(SIGINT, handler) == SIG_ERR) {
+        std::cerr << "Could not setup signal handler\n";
         std::exit(1);
     }
 
-    QuickMessServer server {PORT};
+    QuickMessServer server;
 
     {
         SavedChat saved_chat;

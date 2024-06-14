@@ -7,9 +7,9 @@
 #include <optional>
 #include <memory>
 
-#include <rain_net/connection.hpp>
+#include <rain_net/internal/connection.hpp>
 
-enum Message {
+enum MessygeType {
     MSG_CLIENT_ASK_SIGN_IN = 1,
     MSG_SERVER_ACCEPT_SIGN_IN,
     MSG_SERVER_DENY_SIGN_IN,
@@ -34,9 +34,12 @@ struct StaticCString {
     char data[Size] {};
 };
 
+using UsernameString = StaticCString<MAX_USERNAME_SIZE>;
+using MessygeString = StaticCString<MAX_MESSYGE_SIZE>;
+
 struct User {
     std::string username;
-    std::shared_ptr<rain_net::Connection> connection;
+    std::shared_ptr<rain_net::ClientConnection> connection;
 };
 
 struct Messyge {

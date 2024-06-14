@@ -5,10 +5,10 @@
 #include <common.hpp>
 
 void QuickMessClient::ask_sign_in(const std::string& username) {
-    auto message {rain_net::message(MSG_CLIENT_ASK_SIGN_IN, MAX_USERNAME_SIZE)};
+    rain_net::Message message {MSG_CLIENT_ASK_SIGN_IN};
 
-    StaticCString<MAX_USERNAME_SIZE> c_username;
-    std::strcpy(c_username.data, username.c_str());
+    UsernameString c_username;
+    std::strcpy(c_username.data, username.c_str());  // TODO use safer version
 
     message << c_username;
 
@@ -16,7 +16,7 @@ void QuickMessClient::ask_sign_in(const std::string& username) {
 }
 
 void QuickMessClient::ask_more_chat(unsigned int from_index) {
-    auto message {rain_net::message(MSG_CLIENT_ASK_MORE_CHAT, sizeof(unsigned int))};
+    rain_net::Message message {MSG_CLIENT_ASK_MORE_CHAT};
 
     message << from_index;
 
@@ -24,10 +24,10 @@ void QuickMessClient::ask_more_chat(unsigned int from_index) {
 }
 
 void QuickMessClient::messyge(const std::string& username, const std::string& text) {
-    auto message {rain_net::message(MSG_CLIENT_MESSYGE, username.size() + text.size())};
+    rain_net::Message message {MSG_CLIENT_MESSYGE};
 
-    StaticCString<MAX_USERNAME_SIZE> source_username;
-    StaticCString<MAX_MESSYGE_SIZE> source_text;
+    UsernameString source_username;
+    MessygeString source_text;
 
     std::strcpy(source_username.data, username.c_str());
     std::strcpy(source_text.data, text.c_str());
@@ -36,4 +36,8 @@ void QuickMessClient::messyge(const std::string& username, const std::string& te
     message << source_text;
 
     send_message(message);
+}
+
+std::optional<rain_net::Message> QuickMessClient::next_incoming_message() {
+    return rain_net::Client::next_incoming_message();
 }

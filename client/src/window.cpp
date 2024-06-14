@@ -25,9 +25,7 @@ void QuickMessWindow::start() {
     ImGuiIO& io {ImGui::GetIO()};
     io.IniFilename = nullptr;
 
-    if (!try_connect()) {
-        state = State::NoConnection;
-    }
+    connect();
 }
 
 void QuickMessWindow::update() {
@@ -80,29 +78,29 @@ void QuickMessWindow::no_connection() {
 
     if (ImGui::Button("Try To Reconnect")) {
         state = State::Connecting;
-
-        if (!try_connect()) {
-            state = State::NoConnection;
-        }
+        connect();
     }
 }
 
 void QuickMessWindow::connecting() {
-    if (!check_connection()) {
+    if (failure()) {
         return;
     }
 
-    if (connection_flag) {
+    if (client.connection_established()) {
         state = State::SignIn;
-
-        connection_flag = false;
     }
 
     ImGui::Text("Connecting... Please wait.");
 }
 
 void QuickMessWindow::sign_in() {
-    if (!check_connection()) {
+    if (failure()) {
+        return;
+    }
+
+    if (client.fail()) {
+        std::cout << "Unexpected error: " << client.fail_reason() << '\n';
         return;
     }
 
@@ -128,7 +126,7 @@ void QuickMessWindow::sign_in() {
 }
 
 void QuickMessWindow::processing() {
-    if (!check_connection()) {
+    if (failure()) {
         return;
     }
 
@@ -136,7 +134,7 @@ void QuickMessWindow::processing() {
 }
 
 void QuickMessWindow::chat() {
-    if (!check_connection()) {
+    if (failure()) {
         return;
     }
 
@@ -251,17 +249,20 @@ void QuickMessWindow::chat_messages() {
     ImGui::EndChild();
 }
 
-void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
+void QuickMessWindow::accept_sign_in(const rain_net::Message& message) {
     std::cout << "Server accepted sign in\n";
 
     data.username = buffer_username;
 
+    rain_net::MessageReader reader;
+    reader(message);
+
     unsigned int user_count;
-    message >> user_count;
+    reader >> user_count;
 
     for (unsigned int i {0}; i < user_count; i++) {
-        StaticCString<MAX_USERNAME_SIZE> username;
-        message >> username;
+        UsernameString username;
+        reader >> username;
 
         data.users.push_back(username.data);
     }
@@ -275,41 +276,50 @@ void QuickMessWindow::deny_sign_in() {
     state = State::SignIn;
 }
 
-void QuickMessWindow::messyge(rain_net::Message& message) {
+void QuickMessWindow::messyge(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
 
-    unsigned int index;
-    StaticCString<MAX_MESSYGE_SIZE> text;
-    StaticCString<MAX_USERNAME_SIZE> username;
+    rain_net::MessageReader reader;
+    reader(message);
 
-    message >> index;
-    message >> text;
-    message >> username;
+    unsigned int index;
+    MessygeString text;
+    UsernameString username;
+
+    reader >> index;
+    reader >> text;
+    reader >> username;
 
     add_messyge_to_chat(username.data, text.data, index);
     sort_messages();
 }
 
-void QuickMessWindow::user_signed_in(rain_net::Message& message) {
+void QuickMessWindow::user_signed_in(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
 
-    StaticCString<MAX_USERNAME_SIZE> username;
-    message >> username;
+    rain_net::MessageReader reader;
+    reader(message);
+
+    UsernameString username;
+    reader >> username;
 
     data.users.push_back(username.data);
 }
 
-void QuickMessWindow::user_signed_out(rain_net::Message& message) {
+void QuickMessWindow::user_signed_out(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
 
-    StaticCString<MAX_USERNAME_SIZE> username;
-    message >> username;
+    rain_net::MessageReader reader;
+    reader(message);
+
+    UsernameString username;
+    reader >> username;
 
     // Nothing happens when there's nothing to remove
     data.users.erase(
@@ -318,22 +328,25 @@ void QuickMessWindow::user_signed_out(rain_net::Message& message) {
     );
 }
 
-void QuickMessWindow::offer_more_chat(rain_net::Message& message) {
+void QuickMessWindow::offer_more_chat(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
 
+    rain_net::MessageReader reader;
+    reader(message);
+
     unsigned int count;
-    message >> count;
+    reader >> count;
 
     for (unsigned int i {0}; i < count; i++) {
         unsigned int index;
-        StaticCString<MAX_MESSYGE_SIZE> text;
-        StaticCString<MAX_USERNAME_SIZE> username;
+        MessygeString text;
+        UsernameString username;
 
-        message >> index;
-        message >> text;
-        message >> username;
+        reader >> index;
+        reader >> text;
+        reader >> username;
 
         add_messyge_to_chat(username.data, text.data, index);
     }
@@ -343,12 +356,13 @@ void QuickMessWindow::offer_more_chat(rain_net::Message& message) {
 
 void QuickMessWindow::process_incoming_messages() {
     while (true) {
-        auto result {client.next_incoming_message()};
-        auto message {result.value_or(rain_net::Message())};
+        const auto result {client.next_incoming_message()};
 
         if (!result.has_value()) {
             break;
         }
+
+        const rain_net::Message& message {*result};
 
         switch (message.id()) {
             case MSG_SERVER_ACCEPT_SIGN_IN:
@@ -373,7 +387,7 @@ void QuickMessWindow::process_incoming_messages() {
     }
 }
 
-bool QuickMessWindow::try_connect() {
+void QuickMessWindow::connect() {
     client.disconnect();
 
     DataFile data_file;
@@ -388,24 +402,21 @@ bool QuickMessWindow::try_connect() {
         data_file.host_address = "localhost";
     }
 
-    const bool result {client.connect(data_file.host_address, PORT, [this]() {
-        connection_flag = true;
-    })};
-
-    return result;
+    client.connect(data_file.host_address, PORT);
 }
 
-bool QuickMessWindow::check_connection() {
-    if (!client.is_connected()) {
+bool QuickMessWindow::failure() {
+    if (client.fail()) {
         state = State::NoConnection;
+        std::cerr << client.fail_reason() << '\n';
 
         // Must clear all data
         data = {};
 
-        return false;
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 void QuickMessWindow::add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index) {

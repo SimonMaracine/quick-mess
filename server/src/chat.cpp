@@ -1,24 +1,23 @@
+#include "chat.hpp"
+
 #include <fstream>
 #include <string>
 
-#include <common.hpp>
 #include <nlohmann/json.hpp>
 
-#include "chat.hpp"
-
-inline constexpr const char* FILE_NAME = "quick_mess_chat.json";
+static const char* CHAT_FILE_NAME {"quick_mess_chat.json"};
 
 bool load_chat(SavedChat& saved_chat) {
-    std::ifstream file {FILE_NAME};
+    std::ifstream stream {CHAT_FILE_NAME};
 
-    if (!file.is_open()) {
+    if (!stream.is_open()) {
         return false;
     }
 
     try {
-        nlohmann::json root = nlohmann::json::parse(file);
+        nlohmann::json root {nlohmann::json::parse(stream)};
 
-        nlohmann::json messages = root["chat"];
+        nlohmann::json messages {root["chat"]};
 
         for (const nlohmann::json& message : messages) {
             Messyge messyge;
@@ -38,14 +37,14 @@ bool load_chat(SavedChat& saved_chat) {
 }
 
 bool save_chat(const SavedChat& saved_chat) {
-    std::ofstream file {FILE_NAME};
+    std::ofstream stream {CHAT_FILE_NAME};
 
-    if (!file.is_open()) {
+    if (!stream.is_open()) {
         return false;
     }
 
     nlohmann::json root;
-    nlohmann::json messages = nlohmann::json::array();
+    nlohmann::json messages {nlohmann::json::array()};
 
     for (const Messyge& messyge : saved_chat.chat.messyges) {
         nlohmann::json message;
@@ -59,7 +58,7 @@ bool save_chat(const SavedChat& saved_chat) {
     root["chat"] = messages;
     root["index_counter"] = saved_chat.chat.index_counter;
 
-    file << root.dump(2);
+    stream << root.dump(2);
 
     return true;
 }

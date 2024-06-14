@@ -33,16 +33,17 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void chat_users();
     void chat_messages();
 
-    void accept_sign_in(rain_net::Message& message);
+    void accept_sign_in(const rain_net::Message& message);
     void deny_sign_in();
-    void messyge(rain_net::Message& message);
-    void user_signed_in(rain_net::Message& message);
-    void user_signed_out(rain_net::Message& message);
-    void offer_more_chat(rain_net::Message& message);
+    void messyge(const rain_net::Message& message);
+    void user_signed_in(const rain_net::Message& message);
+    void user_signed_out(const rain_net::Message& message);
+    void offer_more_chat(const rain_net::Message& message);
 
     void process_incoming_messages();
-    bool try_connect();
-    bool check_connection();
+    void connect();
+    bool failure();
+    // bool check_connection();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
     void sort_messages();
     unsigned int load_dpi();
@@ -51,9 +52,9 @@ struct QuickMessWindow : public gui_base::GuiApplication {
 
     QuickMessClient client;
     State state {State::Connecting};
-    bool connection_flag {false};
+    // bool connection_flag {false};
 
-    struct Data {
+    struct {
         std::string username;
         Chat chat;
         std::vector<std::string> users;
