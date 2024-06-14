@@ -9,23 +9,25 @@
 
 #include <rain_net/connection.hpp>
 
-#define MSG_CLIENT_ASK_SIGN_IN 1
-#define MSG_SERVER_ACCEPT_SIGN_IN 2
-#define MSG_SERVER_DENY_SIGN_IN 3
+enum Message {
+    MSG_CLIENT_ASK_SIGN_IN = 1,
+    MSG_SERVER_ACCEPT_SIGN_IN,
+    MSG_SERVER_DENY_SIGN_IN,
 
-#define MSG_SERVER_USER_SIGNED_IN 4
-#define MSG_SERVER_USER_SIGNED_OUT 5
+    MSG_SERVER_USER_SIGNED_IN,
+    MSG_SERVER_USER_SIGNED_OUT,
 
-#define MSG_CLIENT_ASK_MORE_CHAT 6
-#define MSG_SERVER_OFFER_MORE_CHAT 7
+    MSG_CLIENT_ASK_MORE_CHAT,
+    MSG_SERVER_OFFER_MORE_CHAT,
 
-#define MSG_CLIENT_MESSYGE 10
-#define MSG_SERVER_MESSYGE 20
+    MSG_CLIENT_MESSYGE,
+    MSG_SERVER_MESSYGE
+};
 
-inline constexpr std::size_t MAX_USERNAME_SIZE = 16;
-inline constexpr std::size_t MAX_MESSYGE_SIZE = 256;
+inline constexpr std::size_t MAX_USERNAME_SIZE {16};
+inline constexpr std::size_t MAX_MESSYGE_SIZE {256};
 
-inline constexpr std::uint16_t PORT = 7021;
+inline constexpr std::uint16_t PORT {7021};
 
 template<std::size_t Size>
 struct StaticCString {
@@ -45,5 +47,5 @@ struct Messyge {
 
 struct Chat {
     std::vector<Messyge> messyges;
-    unsigned int index_counter = 0;
+    unsigned int index_counter {};
 };

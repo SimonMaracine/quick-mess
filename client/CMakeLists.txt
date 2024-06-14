@@ -13,11 +13,11 @@ add_executable(quick_mess
 target_link_libraries(quick_mess PRIVATE rain_net common gui_base nlohmann_json)
 
 if(UNIX)
-    target_compile_options(quick_mess PRIVATE "-Wall" "-Wextra" "-Wpedantic")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(quick_mess PRIVATE "/W3")
+    target_compile_options(quick_mess PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wconversion")
+elseif(MSVC)
+    target_compile_options(quick_mess PRIVATE "/W4")
 else()
-    message(WARNING "Compiler is not MSVC or platform is not supported, warnings are not enabled")
+    message(WARNING "Warnings are not enabled")
 endif()
 
 target_compile_features(quick_mess PRIVATE cxx_std_17)

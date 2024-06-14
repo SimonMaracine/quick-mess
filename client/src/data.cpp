@@ -1,20 +1,19 @@
-#include <string>
+#include "data.hpp"
+
 #include <fstream>
 
 #include <nlohmann/json.hpp>
 
-#include "data.hpp"
-
-static const char* FILE_NAME = "quick_mess.json";
+static const char* FILE_NAME {"quick_mess.json"};
 
 bool load_data_file(DataFile& data) {
-    std::ifstream file {FILE_NAME};
+    std::ifstream stream {FILE_NAME};
 
-    if (!file.is_open()) {
+    if (!stream.is_open()) {
         return false;
     }
 
-    nlohmann::json root = nlohmann::json::parse(file);
+    nlohmann::json root {nlohmann::json::parse(stream)};
 
     try {
         data.host_address = root["address"].get<std::string>();
@@ -27,9 +26,9 @@ bool load_data_file(DataFile& data) {
 }
 
 bool create_data_file() {
-    std::ofstream file {FILE_NAME};
+    std::ofstream stream {FILE_NAME};
 
-    if (!file.is_open()) {
+    if (!stream.is_open()) {
         return false;
     }
 
@@ -37,7 +36,7 @@ bool create_data_file() {
     root["address"] = "";
     root["dpi_scale"] = 1;
 
-    file << root.dump(2);
+    stream << root.dump(2);
 
     return true;
 }

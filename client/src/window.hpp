@@ -17,12 +17,12 @@ enum class State {
 };
 
 struct QuickMessWindow : public gui_base::GuiApplication {
-    QuickMessWindow()
-        : gui_base::GuiApplication(768, 432, "quick-mess") {}
+    explicit QuickMessWindow(const gui_base::WindowProperties& properties)
+        : gui_base::GuiApplication(properties) {}
 
-    virtual void start() override;
-    virtual void update() override;
-    virtual void dispose() override;
+    void start() override;
+    void update() override;
+    void stop() override;
 
     void no_connection();
     void connecting();
@@ -50,8 +50,8 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     static float rem(float size);
 
     QuickMessClient client;
-    State state = State::Connecting;
-    bool connection_flag = false;
+    State state {State::Connecting};
+    bool connection_flag {false};
 
     struct Data {
         std::string username;
@@ -62,5 +62,4 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     char buffer_username[MAX_USERNAME_SIZE] {};
 
     float CHAT_HEIGHT {};
-    static constexpr ImVec4 BLUEISH = ImVec4(0.6f, 0.5f, 1.0f, 1.0f);
 };

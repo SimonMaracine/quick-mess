@@ -1,4 +1,5 @@
-#include <string>
+#include "window.hpp"
+
 #include <iostream>
 #include <cstring>
 #include <optional>
@@ -6,24 +7,22 @@
 #include <cassert>
 #include <cmath>
 
-#include <gui_base/gui_base.hpp>
-#include <common.hpp>
 #include <rain_net/client.hpp>
 
-#include "window.hpp"
-#include "client.hpp"
 #include "data.hpp"
 
+static constexpr ImVec4 BLUEISH {ImVec4(0.6f, 0.5f, 1.0f, 1.0f)};
+
 void QuickMessWindow::start() {
-    const unsigned int dpi = load_dpi();
+    const unsigned int dpi {load_dpi()};
     create_sized_fonts(dpi);
 
-    ImGuiStyle& style = ImGui::GetStyle();
+    ImGuiStyle& style {ImGui::GetStyle()};
     style.ScaleAllSizes(static_cast<float>(dpi));
 
     CHAT_HEIGHT = rem(8.0f);
 
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO& io {ImGui::GetIO()};
     io.IniFilename = nullptr;
 
     if (!try_connect()) {
@@ -34,16 +33,16 @@ void QuickMessWindow::start() {
 void QuickMessWindow::update() {
     process_incoming_messages();
 
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    const ImGuiViewport* viewport {ImGui::GetMainViewport()};
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(22.0f, 22.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
-    const ImGuiWindowFlags flags = (
+    const ImGuiWindowFlags flags {
         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
-    );
+    };
 
     CHAT_HEIGHT = rem(8.0f);
 
@@ -70,7 +69,7 @@ void QuickMessWindow::update() {
     ImGui::PopStyleVar(2);
 }
 
-void QuickMessWindow::dispose() {
+void QuickMessWindow::stop() {
     client.disconnect();
 }
 
@@ -141,8 +140,8 @@ void QuickMessWindow::chat() {
         return;
     }
 
-    const float USERS_WIDTH = rem(13.5f);
-    const float BUTTON_WIDTH = rem(8.5f);
+    const float USERS_WIDTH {rem(13.5f)};
+    const float BUTTON_WIDTH {rem(8.5f)};
 
     {
         ImGui::BeginTable("MenuLayout", 2, ImGuiTableFlags_BordersInnerV);
@@ -166,7 +165,7 @@ void QuickMessWindow::chat() {
     ImGui::Spacing();
 
     static char buffer[MAX_MESSYGE_SIZE] {};
-    const auto size = ImVec2(ImGui::GetContentRegionAvail().x - BUTTON_WIDTH, ImGui::GetContentRegionAvail().y);
+    const auto size {ImVec2(ImGui::GetContentRegionAvail().x - BUTTON_WIDTH, ImGui::GetContentRegionAvail().y)};
 
     ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size);
 
@@ -225,8 +224,8 @@ void QuickMessWindow::chat_messages() {
         ImGui::Spacing();
 
         for (const auto& message : data.chat.messyges) {
-            if (message.username == std::nullopt) {
-                static constexpr auto COLOR = ImVec4(0.4f, 0.4f, 0.8f, 1.0f);
+            if (!message.username) {
+                static constexpr auto COLOR {ImVec4(0.4f, 0.4f, 0.8f, 1.0f)};
 
                 ImGui::TextColored(COLOR, "[SERVER]\n");
                 ImGui::TextColored(COLOR, "%s", message.text.c_str());
@@ -260,7 +259,7 @@ void QuickMessWindow::accept_sign_in(rain_net::Message& message) {
     unsigned int user_count;
     message >> user_count;
 
-    for (unsigned int i = 0; i < user_count; i++) {
+    for (unsigned int i {0}; i < user_count; i++) {
         StaticCString<MAX_USERNAME_SIZE> username;
         message >> username;
 
@@ -327,7 +326,7 @@ void QuickMessWindow::offer_more_chat(rain_net::Message& message) {
     unsigned int count;
     message >> count;
 
-    for (unsigned int i = 0; i < count; i++) {
+    for (unsigned int i {0}; i < count; i++) {
         unsigned int index;
         StaticCString<MAX_MESSYGE_SIZE> text;
         StaticCString<MAX_USERNAME_SIZE> username;
@@ -344,8 +343,8 @@ void QuickMessWindow::offer_more_chat(rain_net::Message& message) {
 
 void QuickMessWindow::process_incoming_messages() {
     while (true) {
-        auto result = client.next_incoming_message();
-        auto message = result.value_or(rain_net::Message());
+        auto result {client.next_incoming_message()};
+        auto message {result.value_or(rain_net::Message())};
 
         if (!result.has_value()) {
             break;
@@ -389,9 +388,9 @@ bool QuickMessWindow::try_connect() {
         data_file.host_address = "localhost";
     }
 
-    const bool result = client.connect(data_file.host_address, PORT, [this]() {
+    const bool result {client.connect(data_file.host_address, PORT, [this]() {
         connection_flag = true;
-    });
+    })};
 
     return result;
 }
@@ -441,15 +440,21 @@ unsigned int QuickMessWindow::load_dpi() {
         }
     }
 
-    return std::max(std::min(data_file.dpi_scale, 3u), 1u);
+    return std::clamp(data_file.dpi_scale, 1u, 3u);
 }
 
 void QuickMessWindow::create_sized_fonts(unsigned int scale) {
-    const char* FONT_FILE = "LiberationMono-Regular.ttf";\
-    const float SCALE = std::floor(13.0f * static_cast<float>(scale));
+    const char* FONT_FILE {"LiberationMono-Regular.ttf"};
+    const float SCALE {std::floor(13.0f * static_cast<float>(scale))};
 
-    ImGuiIO& io = ImGui::GetIO();
-    io.FontDefault = io.Fonts->AddFontFromFileTTF(FONT_FILE, SCALE);
+    ImGuiIO& io {ImGui::GetIO()};
+    const auto font {io.Fonts->AddFontFromFileTTF(FONT_FILE, SCALE)};  // FIXME
+
+    if (font == nullptr) {
+        return;
+    }
+
+    io.FontDefault = font;
     io.Fonts->Build();
 }
 
