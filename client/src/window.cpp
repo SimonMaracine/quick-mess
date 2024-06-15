@@ -248,8 +248,6 @@ void QuickMessWindow::chat_messages() {
 }
 
 void QuickMessWindow::accept_sign_in(const rain_net::Message& message) {
-    std::cerr << "Server accepted sign in\n";
-
     data.username = buffer_username;
 
     rain_net::MessageReader reader;
