@@ -1,23 +1,24 @@
 #include "chat.hpp"
 
 #include <fstream>
-#include <string>
 
 #include <nlohmann/json.hpp>
 
 static const char* CHAT_FILE_NAME {"quick_mess_chat.json"};
 
-bool load_chat(SavedChat& saved_chat) {
+Chat load_chat() {
     std::ifstream stream {CHAT_FILE_NAME};
 
     if (!stream.is_open()) {
-        return false;
+        throw ChatError("Could not open chat file");
     }
 
-    try {
-        nlohmann::json root {nlohmann::json::parse(stream)};
+    Chat chat;
 
-        nlohmann::json messages {root["chat"]};
+    try {
+        const nlohmann::json root {nlohmann::json::parse(stream)};
+
+        const nlohmann::json& messages {root["chat"]};
 
         for (const nlohmann::json& message : messages) {
             Messyge messyge;
@@ -25,28 +26,28 @@ bool load_chat(SavedChat& saved_chat) {
             messyge.text = message["text"].get<std::string>();
             messyge.index = message["index"].get<unsigned int>();
 
-            saved_chat.chat.messyges.push_back(messyge);
+            chat.messyges.push_back(messyge);
         }
 
-        saved_chat.chat.index_counter = root["index_counter"].get<unsigned int>();
-    } catch (const nlohmann::json::exception&) {
-        return false;
+        chat.index_counter = root["index_counter"].get<unsigned int>();
+    } catch (const nlohmann::json::exception& e) {
+        throw ChatError("Error loading chat file: " + std::string(e.what()));
     }
 
-    return true;
+    return chat;
 }
 
-bool save_chat(const SavedChat& saved_chat) {
+void save_chat(const Chat& chat) {
     std::ofstream stream {CHAT_FILE_NAME};
 
     if (!stream.is_open()) {
-        return false;
+        throw ChatError("Could not open chat file for writing");
     }
 
     nlohmann::json root;
     nlohmann::json messages {nlohmann::json::array()};
 
-    for (const Messyge& messyge : saved_chat.chat.messyges) {
+    for (const Messyge& messyge : chat.messyges) {
         nlohmann::json message;
         message["username"] = messyge.username.value_or("SERVER");
         message["text"] = messyge.text;
@@ -56,9 +57,11 @@ bool save_chat(const SavedChat& saved_chat) {
     }
 
     root["chat"] = messages;
-    root["index_counter"] = saved_chat.chat.index_counter;
+    root["index_counter"] = chat.index_counter;
 
     stream << root.dump(2);
 
-    return true;
+    if (stream.fail()) {
+        throw ChatError("Error saving chat file");
+    }
 }

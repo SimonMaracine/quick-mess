@@ -2,11 +2,14 @@
 
 #include <string>
 #include <vector>
+#include <string_view>
+#include <cstdint>
 
 #include <gui_base/gui_base.hpp>
 #include <common.hpp>
 
 #include "client.hpp"
+#include "data.hpp"
 
 enum class State {
     NoConnection,
@@ -16,14 +19,16 @@ enum class State {
     Chat
 };
 
-struct QuickMessWindow : public gui_base::GuiApplication {
+class QuickMessWindow : public gui_base::GuiApplication {
+public:
     explicit QuickMessWindow(const gui_base::WindowProperties& properties)
         : gui_base::GuiApplication(properties) {}
-
+private:
     void start() override;
     void update() override;
     void stop() override;
 
+    // UI states
     void no_connection();
     void connecting();
     void sign_in();
@@ -33,26 +38,27 @@ struct QuickMessWindow : public gui_base::GuiApplication {
     void chat_users();
     void chat_messages();
 
+    // Server
     void accept_sign_in(const rain_net::Message& message);
     void deny_sign_in();
-    void messyge(const rain_net::Message& message);
     void user_signed_in(const rain_net::Message& message);
     void user_signed_out(const rain_net::Message& message);
     void offer_more_chat(const rain_net::Message& message);
+    void messyge(const rain_net::Message& message);
 
-    void process_incoming_messages();
-    void connect();
+    void process_messages();
+    void connect(std::string_view host, std::uint16_t port);
     bool failure();
-    // bool check_connection();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
     void sort_messages();
-    unsigned int load_dpi();
-    void create_sized_fonts(unsigned int scale);
+
+    static unsigned int load_dpi(const DataFile& data_file);
+    static DataFile load_data();
+    static void create_sized_fonts(unsigned int scale);
     static float rem(float size);
 
     QuickMessClient client;
     State state {State::Connecting};
-    // bool connection_flag {false};
 
     struct {
         std::string username;

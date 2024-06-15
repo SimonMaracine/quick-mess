@@ -7,7 +7,9 @@
 #include <optional>
 #include <memory>
 
-#include <rain_net/internal/connection.hpp>
+namespace rain_net {
+    class ClientConnection;
+}
 
 enum MessygeType {
     MSG_CLIENT_ASK_SIGN_IN = 1,

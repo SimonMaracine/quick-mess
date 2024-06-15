@@ -4,39 +4,43 @@
 
 #include <nlohmann/json.hpp>
 
-static const char* FILE_NAME {"quick_mess.json"};
+static const char* DATA_FILE_NAME {"quick_mess.json"};
 
-bool load_data_file(DataFile& data) {
-    std::ifstream stream {FILE_NAME};
+DataFile load_data_file() {
+    std::ifstream stream {DATA_FILE_NAME};
 
     if (!stream.is_open()) {
-        return false;
+        throw DataError("Could not open data file");
     }
 
-    nlohmann::json root {nlohmann::json::parse(stream)};
+    DataFile data_file;
+
+    const nlohmann::json root {nlohmann::json::parse(stream)};
 
     try {
-        data.host_address = root["address"].get<std::string>();
-        data.dpi_scale = root["dpi_scale"].get<unsigned int>();
-    } catch (const nlohmann::json::exception&) {
-        return false;
+        data_file.address = root["address"].get<std::string>();
+        data_file.dpi_scale = root["dpi_scale"].get<unsigned int>();
+    } catch (const nlohmann::json::exception& e) {
+        throw DataError("Error loading data file: " + std::string(e.what()));
     }
 
-    return true;
+    return data_file;
 }
 
-bool create_data_file() {
-    std::ofstream stream {FILE_NAME};
+void create_data_file() {
+    std::ofstream stream {DATA_FILE_NAME};
 
     if (!stream.is_open()) {
-        return false;
+        throw DataError("Could not open data file for writing");
     }
 
     nlohmann::json root;
-    root["address"] = "";
+    root["address"] = "localhost";
     root["dpi_scale"] = 1;
 
     stream << root.dump(2);
 
-    return true;
+    if (stream.fail()) {
+        throw DataError("Error writing to data file");
+    }
 }

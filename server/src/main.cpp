@@ -1,6 +1,6 @@
 #include <iostream>
-#include <cstdlib>
 #include <csignal>
+#include <utility>
 
 #include <rain_net/server.hpp>
 #include <common.hpp>
@@ -10,6 +10,29 @@
 
 static volatile bool running {true};
 
+static void load_chat(QuickMessServer& server) {
+    Chat chat;
+
+    try {
+        chat = load_chat();
+    } catch (const ChatError& e) {
+        std::cerr << e.what() << '\n';
+        return;
+    }
+
+    server.import_chat(std::move(chat));
+}
+
+static void save_chat(const QuickMessServer& server) {
+    const Chat chat {server.export_chat()};
+
+    try {
+        save_chat(chat);
+    } catch (const ChatError& e) {
+        std::cerr << e.what() << '\n';
+    }
+}
+
 int main() {
     const auto handler {
         [](int) { running = false; }
@@ -17,37 +40,33 @@ int main() {
 
     if (std::signal(SIGINT, handler) == SIG_ERR) {
         std::cerr << "Could not setup signal handler\n";
-        std::exit(1);
+        return 1;
     }
 
     QuickMessServer server;
 
-    {
-        SavedChat saved_chat;
+    load_chat(server);
+    server.start(PORT);
 
-        if (load_chat(saved_chat)) {
-            server.import_chat(saved_chat);
-        } else {
-            std::cout << "Could not read chat from file\n";
-        }
+    if (server.fail()) {
+        return 1;
     }
 
-    server.start();
+    int exit_code {0};
 
     while (running) {
-        server.update(rain_net::Server::MAX_MSG, true);
+        server.process_messages();
+        server.accept_connections();
         server.update_disconnected_users();
+
+        if (server.fail()) {
+            exit_code = 1;
+            break;
+        }
     }
 
     server.stop();
+    save_chat(server);
 
-    {
-        SavedChat saved_chat;
-
-        server.export_chat(saved_chat);
-
-        if (!save_chat(saved_chat)) {
-            std::cout << "Could not write chat to file\n";
-        }
-    }
+    return exit_code;
 }

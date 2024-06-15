@@ -1,10 +1,17 @@
 #pragma once
 
+#include <stdexcept>
+#include <string>
+
 #include <common.hpp>
 
-struct SavedChat {
-    Chat chat;
+struct ChatError : public std::runtime_error {
+    explicit ChatError(const std::string& message)
+        : std::runtime_error(message) {}
+
+    explicit ChatError(const char* message)
+        : std::runtime_error(message) {}
 };
 
-bool load_chat(SavedChat& saved_chat);
-bool save_chat(const SavedChat& saved_chat);
+Chat load_chat();
+void save_chat(const Chat& chat);

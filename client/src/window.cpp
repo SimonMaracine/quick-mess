@@ -7,14 +7,14 @@
 #include <cassert>
 #include <cmath>
 
-#include <rain_net/client.hpp>
-
-#include "data.hpp"
+#include "font.hpp"
 
 static constexpr ImVec4 BLUEISH {ImVec4(0.6f, 0.5f, 1.0f, 1.0f)};
 
 void QuickMessWindow::start() {
-    const unsigned int dpi {load_dpi()};
+    const DataFile data_file {load_data()};
+
+    const unsigned int dpi {load_dpi(data_file)};
     create_sized_fonts(dpi);
 
     ImGuiStyle& style {ImGui::GetStyle()};
@@ -25,11 +25,11 @@ void QuickMessWindow::start() {
     ImGuiIO& io {ImGui::GetIO()};
     io.IniFilename = nullptr;
 
-    connect();
+    connect(data_file.address, PORT);
 }
 
 void QuickMessWindow::update() {
-    process_incoming_messages();
+    process_messages();
 
     const ImGuiViewport* viewport {ImGui::GetMainViewport()};
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -78,7 +78,10 @@ void QuickMessWindow::no_connection() {
 
     if (ImGui::Button("Try To Reconnect")) {
         state = State::Connecting;
-        connect();
+
+        const DataFile data_file {load_data()};
+
+        connect(data_file.address, PORT);
     }
 }
 
@@ -99,11 +102,6 @@ void QuickMessWindow::sign_in() {
         return;
     }
 
-    if (client.fail()) {
-        std::cout << "Unexpected error: " << client.fail_reason() << '\n';
-        return;
-    }
-
     ImGui::TextColored(BLUEISH, "Connected to the server!");
 
     ImGui::Spacing();
@@ -120,7 +118,7 @@ void QuickMessWindow::sign_in() {
 
             state = State::Processing;
         } else {
-            std::cout << "Invalid username\n";
+            std::cerr << "Invalid username\n";
         }
     }
 }
@@ -250,7 +248,7 @@ void QuickMessWindow::chat_messages() {
 }
 
 void QuickMessWindow::accept_sign_in(const rain_net::Message& message) {
-    std::cout << "Server accepted sign in\n";
+    std::cerr << "Server accepted sign in\n";
 
     data.username = buffer_username;
 
@@ -271,29 +269,9 @@ void QuickMessWindow::accept_sign_in(const rain_net::Message& message) {
 }
 
 void QuickMessWindow::deny_sign_in() {
-    std::cout << "Server denied sign in\n";
+    std::cerr << "Server denied sign in\n";
 
     state = State::SignIn;
-}
-
-void QuickMessWindow::messyge(const rain_net::Message& message) {
-    if (state != State::Chat) {
-        return;
-    }
-
-    rain_net::MessageReader reader;
-    reader(message);
-
-    unsigned int index;
-    MessygeString text;
-    UsernameString username;
-
-    reader >> index;
-    reader >> text;
-    reader >> username;
-
-    add_messyge_to_chat(username.data, text.data, index);
-    sort_messages();
 }
 
 void QuickMessWindow::user_signed_in(const rain_net::Message& message) {
@@ -354,7 +332,27 @@ void QuickMessWindow::offer_more_chat(const rain_net::Message& message) {
     sort_messages();
 }
 
-void QuickMessWindow::process_incoming_messages() {
+void QuickMessWindow::messyge(const rain_net::Message& message) {
+    if (state != State::Chat) {
+        return;
+    }
+
+    rain_net::MessageReader reader;
+    reader(message);
+
+    unsigned int index;
+    MessygeString text;
+    UsernameString username;
+
+    reader >> index;
+    reader >> text;
+    reader >> username;
+
+    add_messyge_to_chat(username.data, text.data, index);
+    sort_messages();
+}
+
+void QuickMessWindow::process_messages() {
     while (true) {
         const auto result {client.next_incoming_message()};
 
@@ -371,9 +369,6 @@ void QuickMessWindow::process_incoming_messages() {
             case MSG_SERVER_DENY_SIGN_IN:
                 deny_sign_in();
                 break;
-            case MSG_SERVER_MESSYGE:
-                messyge(message);
-                break;
             case MSG_SERVER_USER_SIGNED_IN:
                 user_signed_in(message);
                 break;
@@ -383,26 +378,15 @@ void QuickMessWindow::process_incoming_messages() {
             case MSG_SERVER_OFFER_MORE_CHAT:
                 offer_more_chat(message);
                 break;
+            case MSG_SERVER_MESSYGE:
+                messyge(message);
+                break;
         }
     }
 }
 
-void QuickMessWindow::connect() {
-    client.disconnect();
-
-    DataFile data_file;
-
-    if (!load_data_file(data_file)) {
-        std::cout << "Could not load host address from file\n";
-
-        if (!create_data_file()) {
-            std::cout << "Could not create data file\n";
-        }
-
-        data_file.host_address = "localhost";
-    }
-
-    client.connect(data_file.host_address, PORT);
+void QuickMessWindow::connect(std::string_view host, std::uint16_t port) {
+    client.connect(host, port);
 }
 
 bool QuickMessWindow::failure() {
@@ -440,26 +424,43 @@ void QuickMessWindow::sort_messages() {
     });
 }
 
-unsigned int QuickMessWindow::load_dpi() {
-    DataFile data_file;
-
-    if (!load_data_file(data_file)) {
-        std::cout << "Could not load DPI scale from file\n";
-
-        if (!create_data_file()) {
-            std::cout << "Could not create data file\n";
-        }
-    }
-
+unsigned int QuickMessWindow::load_dpi(const DataFile& data_file) {
     return std::clamp(data_file.dpi_scale, 1u, 3u);
 }
 
+DataFile QuickMessWindow::load_data() {
+    DataFile data_file;
+
+    try {
+        data_file = load_data_file();
+    } catch (const DataError& e) {
+        std::cerr << e.what() << '\n';
+
+        try {
+            create_data_file();
+        } catch (const DataError& e) {
+            std::cerr << e.what() << '\n';
+        }
+    }
+
+    return data_file;
+}
+
 void QuickMessWindow::create_sized_fonts(unsigned int scale) {
-    const char* FONT_FILE {"LiberationMono-Regular.ttf"};
     const float SCALE {std::floor(13.0f * static_cast<float>(scale))};
 
+    // This should make the next const_cast safe
+    ImFontConfig config;
+    config.FontDataOwnedByAtlas = false;
+
     ImGuiIO& io {ImGui::GetIO()};
-    const auto font {io.Fonts->AddFontFromFileTTF(FONT_FILE, SCALE)};  // FIXME
+
+    const auto font {io.Fonts->AddFontFromMemoryTTF(
+        const_cast<unsigned char*>(LiberationMono_Regular_ttf),
+        LiberationMono_Regular_ttf_len,
+        SCALE,
+        &config
+    )};
 
     if (font == nullptr) {
         return;
