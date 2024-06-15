@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 
-add_subdirectory(extern/json)
-
 add_executable(quick_mess
     "src/client.cpp"
     "src/client.hpp"
