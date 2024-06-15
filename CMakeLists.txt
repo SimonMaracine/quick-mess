@@ -5,7 +5,6 @@ project("quick-mess" LANGUAGES CXX)
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Variable used to control the build type")
 
 add_subdirectory(extern/Rain-Net)
-add_subdirectory(extern/tiny-gui-base)
 add_subdirectory(extern/json)
 
 add_subdirectory(common)

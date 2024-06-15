@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+add_subdirectory(extern/tiny-gui-base)
+
 add_executable(quick_mess
     "src/client.cpp"
     "src/client.hpp"
