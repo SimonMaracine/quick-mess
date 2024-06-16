@@ -169,11 +169,11 @@ void QuickMessWindow::chat() {
     static char buffer[MAX_MESSYGE_SIZE] {};
     const auto size {ImVec2(ImGui::GetContentRegionAvail().x - BUTTON_WIDTH, ImGui::GetContentRegionAvail().y)};
 
-    ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size);
+    ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size);  // TODO Ctrl+Enter new line
 
     ImGui::SameLine();
 
-    if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {
+    if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {  // TODO Enter key event
         assert(!data.username.empty());
 
         client.client_messyge(data.username, buffer);

@@ -16,9 +16,8 @@ Chat load_chat() {
     Chat chat;
 
     try {
-        // Do this stupid thing, because aggregate initialization breaks things
-        nlohmann::json root;
-        root = nlohmann::json::parse(stream);
+        // Do this, because aggregate initialization breaks things
+        nlohmann::json root (nlohmann::json::parse(stream));
 
         const nlohmann::json& messages {root["chat"]};
 
@@ -48,9 +47,8 @@ void save_chat(const Chat& chat) {
 
     nlohmann::json root;
 
-    // Do this stupid thing, because aggregate initialization breaks things
-    nlohmann::json messages;
-    messages = nlohmann::json::array();
+    // Do this, because aggregate initialization breaks things
+    nlohmann::json messages (nlohmann::json::array());
 
     for (const Messyge& messyge : chat.messyges) {
         nlohmann::json message;

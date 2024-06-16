@@ -15,9 +15,8 @@ DataFile load_data_file() {
 
     DataFile data_file;
 
-    // Do this stupid thing, because aggregate initialization breaks things
-    nlohmann::json root;
-    root = nlohmann::json::parse(stream);
+    // Do this, because aggregate initialization breaks things
+    nlohmann::json root (nlohmann::json::parse(stream));
 
     try {
         data_file.address = root["address"].get<std::string>();
