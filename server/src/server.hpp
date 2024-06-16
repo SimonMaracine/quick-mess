@@ -27,17 +27,17 @@ private:
     void on_client_disconnected(std::shared_ptr<rain_net::ClientConnection> connection) override;
 
     // Server
-    void accept_sign_in(std::shared_ptr<rain_net::ClientConnection> connection);
-    void deny_sign_in(std::shared_ptr<rain_net::ClientConnection> connection);
-    void user_signed_in(std::shared_ptr<rain_net::ClientConnection> connection, const UsernameString& username);
-    void user_signed_out(const std::string& username);
-    void offer_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, unsigned int from_index);
-    void messyge(const std::string& text);
+    void server_accept_sign_in(std::shared_ptr<rain_net::ClientConnection> connection);
+    void server_deny_sign_in(std::shared_ptr<rain_net::ClientConnection> connection);
+    void server_user_signed_in(std::shared_ptr<rain_net::ClientConnection> connection, const UsernameString& username);
+    void server_user_signed_out(const std::string& username);
+    void server_offer_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, unsigned int from_index);
+    void server_messyge(const std::string& text);
 
     // Client
-    void ask_sign_in(std::shared_ptr<rain_net::ClientConnection> connection, const rain_net::Message& message);
-    void ask_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, const rain_net::Message& message);
-    void messyge(const rain_net::Message& message);
+    void client_ask_sign_in(std::shared_ptr<rain_net::ClientConnection> connection, const rain_net::Message& message);
+    void client_ask_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, const rain_net::Message& message);
+    void client_messyge(const rain_net::Message& message);
 
     void add_messyge_to_chat(const std::string& username, const std::string& text);
 

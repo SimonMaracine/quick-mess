@@ -37,12 +37,12 @@ private:
     void chat_messages();
 
     // Server
-    void accept_sign_in(const rain_net::Message& message);
-    void deny_sign_in();
-    void user_signed_in(const rain_net::Message& message);
-    void user_signed_out(const rain_net::Message& message);
-    void offer_more_chat(const rain_net::Message& message);
-    void messyge(const rain_net::Message& message);
+    void server_accept_sign_in(const rain_net::Message& message);
+    void server_deny_sign_in();
+    void server_user_signed_in(const rain_net::Message& message);
+    void server_user_signed_out(const rain_net::Message& message);
+    void server_offer_more_chat(const rain_net::Message& message);
+    void server_messyge(const rain_net::Message& message);
 
     void process_messages();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);

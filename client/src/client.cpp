@@ -4,7 +4,7 @@
 
 #include <common.hpp>
 
-void QuickMessClient::ask_sign_in(const std::string& username) {
+void QuickMessClient::client_ask_sign_in(const std::string& username) {
     rain_net::Message message {MSG_CLIENT_ASK_SIGN_IN};
 
     UsernameString c_username;
@@ -15,7 +15,7 @@ void QuickMessClient::ask_sign_in(const std::string& username) {
     send_message(message);
 }
 
-void QuickMessClient::ask_more_chat(unsigned int from_index) {
+void QuickMessClient::client_ask_more_chat(unsigned int from_index) {
     rain_net::Message message {MSG_CLIENT_ASK_MORE_CHAT};
 
     message << from_index;
@@ -23,7 +23,7 @@ void QuickMessClient::ask_more_chat(unsigned int from_index) {
     send_message(message);
 }
 
-void QuickMessClient::messyge(const std::string& username, const std::string& text) {
+void QuickMessClient::client_messyge(const std::string& username, const std::string& text) {
     rain_net::Message message {MSG_CLIENT_MESSYGE};
 
     UsernameString source_username;

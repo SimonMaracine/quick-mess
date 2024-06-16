@@ -128,7 +128,7 @@ void QuickMessWindow::sign_in() {
 
     if (ImGui::Button("Sign In")) {
         if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
-            client.ask_sign_in(buffer_username);
+            client.client_ask_sign_in(buffer_username);
 
             state = State::Processing;
         } else {
@@ -176,7 +176,7 @@ void QuickMessWindow::chat() {
     if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {
         assert(!data.username.empty());
 
-        client.messyge(data.username, buffer);
+        client.client_messyge(data.username, buffer);
         std::memset(buffer, 0, MAX_MESSYGE_SIZE);
     }
 }
@@ -217,7 +217,7 @@ void QuickMessWindow::chat_messages() {
         if (!data.chat.messyges.empty() && first_index > 0) {
             if (ImGui::Button("Load More")) {
                 if (first_index > 0) {
-                    client.ask_more_chat(first_index);
+                    client.client_ask_more_chat(first_index);
                 }
             }
         }
@@ -253,7 +253,7 @@ void QuickMessWindow::chat_messages() {
     ImGui::EndChild();
 }
 
-void QuickMessWindow::accept_sign_in(const rain_net::Message& message) {
+void QuickMessWindow::server_accept_sign_in(const rain_net::Message& message) {
     data.username = buffer_username;
 
     rain_net::MessageReader reader;
@@ -272,13 +272,13 @@ void QuickMessWindow::accept_sign_in(const rain_net::Message& message) {
     state = State::Chat;
 }
 
-void QuickMessWindow::deny_sign_in() {
+void QuickMessWindow::server_deny_sign_in() {
     std::cerr << "Server denied sign in\n";
 
     state = State::SignIn;
 }
 
-void QuickMessWindow::user_signed_in(const rain_net::Message& message) {
+void QuickMessWindow::server_user_signed_in(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
@@ -292,7 +292,7 @@ void QuickMessWindow::user_signed_in(const rain_net::Message& message) {
     data.users.push_back(username.data);
 }
 
-void QuickMessWindow::user_signed_out(const rain_net::Message& message) {
+void QuickMessWindow::server_user_signed_out(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
@@ -310,7 +310,7 @@ void QuickMessWindow::user_signed_out(const rain_net::Message& message) {
     );
 }
 
-void QuickMessWindow::offer_more_chat(const rain_net::Message& message) {
+void QuickMessWindow::server_offer_more_chat(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
@@ -336,7 +336,7 @@ void QuickMessWindow::offer_more_chat(const rain_net::Message& message) {
     sort_messages();
 }
 
-void QuickMessWindow::messyge(const rain_net::Message& message) {
+void QuickMessWindow::server_messyge(const rain_net::Message& message) {
     if (state != State::Chat) {
         return;
     }
@@ -368,22 +368,22 @@ void QuickMessWindow::process_messages() {
 
         switch (message.id()) {
             case MSG_SERVER_ACCEPT_SIGN_IN:
-                accept_sign_in(message);
+                server_accept_sign_in(message);
                 break;
             case MSG_SERVER_DENY_SIGN_IN:
-                deny_sign_in();
+                server_deny_sign_in();
                 break;
             case MSG_SERVER_USER_SIGNED_IN:
-                user_signed_in(message);
+                server_user_signed_in(message);
                 break;
             case MSG_SERVER_USER_SIGNED_OUT:
-                user_signed_out(message);
+                server_user_signed_out(message);
                 break;
             case MSG_SERVER_OFFER_MORE_CHAT:
-                offer_more_chat(message);
+                server_offer_more_chat(message);
                 break;
             case MSG_SERVER_MESSYGE:
-                messyge(message);
+                server_messyge(message);
                 break;
         }
     }
