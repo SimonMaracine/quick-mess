@@ -20,3 +20,8 @@ endif()
 
 target_compile_features(quick_mess_server PRIVATE cxx_std_17)
 set_target_properties(quick_mess_server PROPERTIES CXX_EXTENSIONS OFF)
+
+if(UNIX AND QUICK_MESS_ASAN)
+    target_compile_options(quick_mess_server PRIVATE "-fsanitize=address" "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer")
+    target_link_options(quick_mess_server PRIVATE "-fsanitize=address" "-fsanitize=undefined")
+endif()

@@ -2,8 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <string_view>
-#include <cstdint>
 
 #include <gui_base/gui_base.hpp>
 #include <common.hpp>
@@ -47,8 +45,6 @@ private:
     void messyge(const rain_net::Message& message);
 
     void process_messages();
-    void connect(std::string_view host, std::uint16_t port);
-    bool failure();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
     void sort_messages();
 
@@ -67,6 +63,5 @@ private:
     } data;
 
     char buffer_username[MAX_USERNAME_SIZE] {};
-
     float CHAT_HEIGHT {};
 };

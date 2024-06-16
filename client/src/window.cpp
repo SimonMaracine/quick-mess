@@ -25,7 +25,14 @@ void QuickMessWindow::start() {
     ImGuiIO& io {ImGui::GetIO()};
     io.IniFilename = nullptr;
 
-    connect(data_file.address, PORT);
+    client.connect(data_file.address, PORT);
+
+    if (client.fail()) {
+        std::cerr << client.fail_reason() << '\n';
+        client.disconnect();
+
+        state = State::NoConnection;
+    }
 }
 
 void QuickMessWindow::update() {
@@ -65,6 +72,14 @@ void QuickMessWindow::update() {
     ImGui::End();
 
     ImGui::PopStyleVar(2);
+
+    if (client.fail()) {
+        std::cerr << client.fail_reason() << '\n';
+        client.disconnect();
+
+        state = State::NoConnection;
+        data = {};
+    }
 }
 
 void QuickMessWindow::stop() {
@@ -81,15 +96,18 @@ void QuickMessWindow::no_connection() {
 
         const DataFile data_file {load_data()};
 
-        connect(data_file.address, PORT);
+        client.connect(data_file.address, PORT);
+
+        if (client.fail()) {
+            std::cerr << client.fail_reason() << '\n';
+            client.disconnect();
+
+            state = State::NoConnection;
+        }
     }
 }
 
 void QuickMessWindow::connecting() {
-    if (failure()) {
-        return;
-    }
-
     if (client.connection_established()) {
         state = State::SignIn;
     }
@@ -98,10 +116,6 @@ void QuickMessWindow::connecting() {
 }
 
 void QuickMessWindow::sign_in() {
-    if (failure()) {
-        return;
-    }
-
     ImGui::TextColored(BLUEISH, "Connected to the server!");
 
     ImGui::Spacing();
@@ -124,18 +138,10 @@ void QuickMessWindow::sign_in() {
 }
 
 void QuickMessWindow::processing() {
-    if (failure()) {
-        return;
-    }
-
     ImGui::Text("Processing... Please wait.");
 }
 
 void QuickMessWindow::chat() {
-    if (failure()) {
-        return;
-    }
-
     const float USERS_WIDTH {rem(13.5f)};
     const float BUTTON_WIDTH {rem(8.5f)};
 
@@ -381,24 +387,6 @@ void QuickMessWindow::process_messages() {
                 break;
         }
     }
-}
-
-void QuickMessWindow::connect(std::string_view host, std::uint16_t port) {
-    client.connect(host, port);
-}
-
-bool QuickMessWindow::failure() {
-    if (client.fail()) {
-        state = State::NoConnection;
-        std::cerr << client.fail_reason() << '\n';
-
-        // Must clear all data
-        data = {};
-
-        return true;
-    }
-
-    return false;
 }
 
 void QuickMessWindow::add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index) {
