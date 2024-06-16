@@ -6,3 +6,7 @@
 	path = extern/Rain-Net
 	url = https://github.com/SimonMaracine/Rain-Net
 	branch = stable
+[submodule "client/extern/tiny-gui-base"]
+	path = client/extern/tiny-gui-base
+	url = https://github.com/SimonMaracine/tiny-gui-base
+	branch = stable
