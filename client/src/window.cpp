@@ -210,12 +210,12 @@ void QuickMessWindow::chat_messages() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 12.0f));
 
     {
-        ImGui::BeginChild("ChatInner", {}, false, ImGuiWindowFlags_AlwaysUseWindowPadding);
+        ImGui::BeginChild("ChatInner", {}, ImGuiChildFlags_None, ImGuiWindowFlags_AlwaysUseWindowPadding);
 
-        if (!data.chat.messyges.empty() && data.chat.messyges.at(0).index > 0) {
+        const unsigned int first_index {data.chat.messyges.at(0).index};
+
+        if (!data.chat.messyges.empty() && first_index > 0) {
             if (ImGui::Button("Load More")) {
-                const unsigned int first_index = data.chat.messyges.at(0).index;
-
                 if (first_index > 0) {
                     client.ask_more_chat(first_index);
                 }
@@ -240,7 +240,7 @@ void QuickMessWindow::chat_messages() {
             ImGui::Spacing();
 
             // Automatically scroll to the bottom
-            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 5.0f) {
+            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 6.0f) {
                 ImGui::SetScrollHereY(1.0f);
             }
         }
@@ -441,12 +441,14 @@ void QuickMessWindow::create_sized_fonts(unsigned int scale) {
 
     ImGuiIO& io {ImGui::GetIO()};
 
-    const auto font {io.Fonts->AddFontFromMemoryTTF(
-        const_cast<unsigned char*>(LiberationMono_Regular_ttf),
-        LiberationMono_Regular_ttf_len,
-        SCALE,
-        &config
-    )};
+    const auto font {
+        io.Fonts->AddFontFromMemoryTTF(
+            const_cast<unsigned char*>(LiberationMono_Regular_ttf),
+            LiberationMono_Regular_ttf_len,
+            SCALE,
+            &config
+        )
+    };
 
     if (font == nullptr) {
         return;
