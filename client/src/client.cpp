@@ -7,7 +7,7 @@
 void QuickMessClient::client_ask_sign_in(const std::string& username) {
     rain_net::Message message {MSG_CLIENT_ASK_SIGN_IN};
 
-    UsernameString c_username;
+    UsernameStr c_username;
     std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
 
     message << c_username;
@@ -26,8 +26,8 @@ void QuickMessClient::client_ask_more_chat(unsigned int from_index) {
 void QuickMessClient::client_messyge(const std::string& username, const std::string& text) {
     rain_net::Message message {MSG_CLIENT_MESSYGE};
 
-    UsernameString source_username;
-    MessygeString source_text;
+    UsernameStr source_username;
+    MessygeStr source_text;
 
     std::strncpy(source_username.data, username.c_str(), MAX_USERNAME_SIZE);
     std::strncpy(source_text.data, text.c_str(), MAX_MESSYGE_SIZE);

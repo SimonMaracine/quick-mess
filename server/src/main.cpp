@@ -7,6 +7,7 @@
 
 #include "server.hpp"
 #include "chat.hpp"
+#include "clock.hpp"
 
 static volatile bool running {true};
 
@@ -55,6 +56,8 @@ int main() {
     int exit_code {0};
 
     while (running) {
+        Clock clock;
+
         server.process_messages();
         server.accept_connections();
         server.update_disconnected_users();
@@ -63,6 +66,10 @@ int main() {
             exit_code = 1;
             break;
         }
+
+        using namespace std::chrono_literals;
+
+        clock.stop_and_wait(32ms);
     }
 
     server.stop();

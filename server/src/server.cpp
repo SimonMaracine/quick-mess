@@ -80,7 +80,7 @@ void QuickMessServer::server_accept_sign_in(std::shared_ptr<rain_net::ClientConn
     rain_net::Message message {MSG_SERVER_ACCEPT_SIGN_IN};
 
     for (const auto& [username, user] : active_users) {
-        UsernameString c_username;
+        UsernameStr c_username;
         std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
 
         message << c_username;
@@ -98,7 +98,7 @@ void QuickMessServer::server_deny_sign_in(std::shared_ptr<rain_net::ClientConnec
     send_message(connection, message);
 }
 
-void QuickMessServer::server_user_signed_in(std::shared_ptr<rain_net::ClientConnection> connection, const UsernameString& username) {
+void QuickMessServer::server_user_signed_in(std::shared_ptr<rain_net::ClientConnection> connection, const UsernameStr& username) {
     rain_net::Message message {MSG_SERVER_USER_SIGNED_IN};
 
     message << username;
@@ -109,7 +109,7 @@ void QuickMessServer::server_user_signed_in(std::shared_ptr<rain_net::ClientConn
 void QuickMessServer::server_user_signed_out(const std::string& username) {
     rain_net::Message message {MSG_SERVER_USER_SIGNED_OUT};
 
-    UsernameString c_username;
+    UsernameStr c_username;
     std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
 
     message << c_username;
@@ -127,8 +127,8 @@ void QuickMessServer::server_offer_more_chat(std::shared_ptr<rain_net::ClientCon
     for (std::size_t i {from_index}; i > 0; i--) {
         const std::size_t I {i - 1};
 
-        UsernameString username;
-        MessygeString text;
+        UsernameStr username;
+        MessygeStr text;
 
         std::strncpy(username.data, chat.messyges.at(I).username.value_or("SERVER").c_str(), MAX_USERNAME_SIZE);
         std::strncpy(text.data, chat.messyges.at(I).text.c_str(), MAX_MESSYGE_SIZE);
@@ -150,8 +150,8 @@ void QuickMessServer::server_offer_more_chat(std::shared_ptr<rain_net::ClientCon
 void QuickMessServer::server_messyge(const std::string& text) {
     rain_net::Message broadcast_message {MSG_SERVER_MESSYGE};
 
-    UsernameString username;
-    MessygeString c_text;
+    UsernameStr username;
+    MessygeStr c_text;
 
     std::strncpy(username.data, "SERVER", MAX_USERNAME_SIZE);
     std::strncpy(c_text.data, text.c_str(), MAX_MESSYGE_SIZE);
@@ -169,7 +169,7 @@ void QuickMessServer::client_ask_sign_in(std::shared_ptr<rain_net::ClientConnect
     rain_net::MessageReader reader;
     reader(message);
 
-    UsernameString username;
+    UsernameStr username;
     reader >> username;
 
     if (active_users.find(std::string(username.data)) != active_users.end()) {
@@ -209,8 +209,8 @@ void QuickMessServer::client_messyge(const rain_net::Message& message) {
     rain_net::MessageReader reader;
     reader(message);
 
-    MessygeString text;
-    UsernameString username;
+    MessygeStr text;
+    UsernameStr username;
 
     reader >> text;
     reader >> username;

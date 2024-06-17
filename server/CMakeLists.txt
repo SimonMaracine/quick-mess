@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.20)
 add_executable(quick_mess_server
     "src/chat.cpp"
     "src/chat.hpp"
+    "src/clock.cpp"
+    "src/clock.hpp"
     "src/main.cpp"
     "src/server.cpp"
     "src/server.hpp"

@@ -32,12 +32,12 @@ inline constexpr std::size_t MAX_MESSYGE_SIZE {256};
 inline constexpr std::uint16_t PORT {7021};
 
 template<std::size_t Size>
-struct StaticCString {
+struct StaticCStr {
     char data[Size] {};
 };
 
-using UsernameString = StaticCString<MAX_USERNAME_SIZE>;
-using MessygeString = StaticCString<MAX_MESSYGE_SIZE>;
+using UsernameStr = StaticCStr<MAX_USERNAME_SIZE>;
+using MessygeStr = StaticCStr<MAX_MESSYGE_SIZE>;
 
 struct User {
     std::string username;

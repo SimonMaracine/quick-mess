@@ -29,7 +29,7 @@ private:
     // Server
     void server_accept_sign_in(std::shared_ptr<rain_net::ClientConnection> connection);
     void server_deny_sign_in(std::shared_ptr<rain_net::ClientConnection> connection);
-    void server_user_signed_in(std::shared_ptr<rain_net::ClientConnection> connection, const UsernameString& username);
+    void server_user_signed_in(std::shared_ptr<rain_net::ClientConnection> connection, const UsernameStr& username);
     void server_user_signed_out(const std::string& username);
     void server_offer_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, unsigned int from_index);
     void server_messyge(const std::string& text);

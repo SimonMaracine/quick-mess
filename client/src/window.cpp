@@ -263,7 +263,7 @@ void QuickMessWindow::server_accept_sign_in(const rain_net::Message& message) {
     reader >> user_count;
 
     for (unsigned int i {0}; i < user_count; i++) {
-        UsernameString username;
+        UsernameStr username;
         reader >> username;
 
         data.users.push_back(username.data);
@@ -286,7 +286,7 @@ void QuickMessWindow::server_user_signed_in(const rain_net::Message& message) {
     rain_net::MessageReader reader;
     reader(message);
 
-    UsernameString username;
+    UsernameStr username;
     reader >> username;
 
     data.users.push_back(username.data);
@@ -300,7 +300,7 @@ void QuickMessWindow::server_user_signed_out(const rain_net::Message& message) {
     rain_net::MessageReader reader;
     reader(message);
 
-    UsernameString username;
+    UsernameStr username;
     reader >> username;
 
     // Nothing happens when there's nothing to remove
@@ -323,8 +323,8 @@ void QuickMessWindow::server_offer_more_chat(const rain_net::Message& message) {
 
     for (unsigned int i {0}; i < count; i++) {
         unsigned int index;
-        MessygeString text;
-        UsernameString username;
+        MessygeStr text;
+        UsernameStr username;
 
         reader >> index;
         reader >> text;
@@ -345,8 +345,8 @@ void QuickMessWindow::server_messyge(const rain_net::Message& message) {
     reader(message);
 
     unsigned int index;
-    MessygeString text;
-    UsernameString username;
+    MessygeStr text;
+    UsernameStr username;
 
     reader >> index;
     reader >> text;
