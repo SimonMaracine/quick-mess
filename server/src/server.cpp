@@ -47,8 +47,8 @@ void QuickMessServer::update_disconnected_users() {
     disconnected_users.clear();
 }
 
-void QuickMessServer::import_chat(Chat&& chat) {
-    this->chat = std::move(chat);
+void QuickMessServer::import_chat(Chat&& chat_) {
+    chat = std::move(chat_);
 }
 
 Chat QuickMessServer::export_chat() const {

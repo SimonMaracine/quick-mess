@@ -20,7 +20,7 @@ public:
     void process_messages();
     void update_disconnected_users();
 
-    void import_chat(Chat&& chat);
+    void import_chat(Chat&& chat_);
     Chat export_chat() const;
 private:
     bool on_client_connected(std::shared_ptr<rain_net::ClientConnection> connection) override;

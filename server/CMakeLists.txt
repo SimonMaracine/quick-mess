@@ -27,3 +27,5 @@ if(UNIX AND QUICK_MESS_ASAN)
     target_compile_options(quick_mess_server PRIVATE "-fsanitize=address" "-fsanitize=undefined" "-g" "-fno-omit-frame-pointer")
     target_link_options(quick_mess_server PRIVATE "-fsanitize=address" "-fsanitize=undefined")
 endif()
+
+target_compile_definitions(quick_mess_server PRIVATE "_CRT_SECURE_NO_WARNINGS")
