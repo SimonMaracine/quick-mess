@@ -435,18 +435,25 @@ DataFile QuickMessWindow::load_data() {
 void QuickMessWindow::create_sized_fonts(unsigned int scale) {
     const float SCALE {std::floor(13.0f * static_cast<float>(scale))};
 
+    ImGuiIO& io {ImGui::GetIO()};
+
+    ImFontGlyphRangesBuilder builder;
+    builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
+    builder.AddText(u8"ăîâșțĂÎÂȘȚ„”");
+    ImVector<ImWchar> ranges;
+    builder.BuildRanges(&ranges);
+
     // This should make the next const_cast safe
     ImFontConfig config;
     config.FontDataOwnedByAtlas = false;
-
-    ImGuiIO& io {ImGui::GetIO()};
 
     const auto font {
         io.Fonts->AddFontFromMemoryTTF(
             const_cast<unsigned char*>(LiberationMono_Regular_ttf),
             LiberationMono_Regular_ttf_len,
             SCALE,
-            &config
+            &config,
+            ranges.Data
         )
     };
 
