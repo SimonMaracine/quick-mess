@@ -64,4 +64,5 @@ private:
 
     char buffer_username[MAX_USERNAME_SIZE] {};
     float CHAT_HEIGHT {};
+    bool load_more {true};
 };

@@ -212,12 +212,21 @@ void QuickMessWindow::chat_messages() {
     {
         ImGui::BeginChild("ChatInner", {}, ImGuiChildFlags_None, ImGuiWindowFlags_AlwaysUseWindowPadding);
 
-        const unsigned int first_index {data.chat.messyges.at(0).index};
+        if (!data.chat.messyges.empty()) {
+            const unsigned int first_index {data.chat.messyges.at(0).index};
 
-        if (!data.chat.messyges.empty() && first_index > 0) {
-            if (ImGui::Button("Load More")) {
-                if (first_index > 0) {
-                    client.client_ask_more_chat(first_index);
+            if (first_index > 0) {
+                if (load_more) {
+                    if (ImGui::Button("Load More")) {
+                        if (first_index > 0) {
+                            load_more = false;
+                            client.client_ask_more_chat(first_index);
+                        }
+                    }
+                } else {
+                    ImGui::BeginDisabled();
+                    ImGui::Button("Load More");
+                    ImGui::EndDisabled();
                 }
             }
         }
@@ -334,6 +343,8 @@ void QuickMessWindow::server_offer_more_chat(const rain_net::Message& message) {
     }
 
     sort_messages();
+
+    load_more = true;
 }
 
 void QuickMessWindow::server_messyge(const rain_net::Message& message) {
