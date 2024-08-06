@@ -31,3 +31,7 @@ if(UNIX AND QUICK_MESS_ASAN)
 endif()
 
 target_compile_definitions(quick_mess PRIVATE "_CRT_SECURE_NO_WARNINGS")
+
+if(WIN32)
+    target_compile_options(quick_mess PRIVATE "/utf-8")
+endif()
