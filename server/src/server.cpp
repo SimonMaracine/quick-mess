@@ -78,6 +78,7 @@ void QuickMessServer::on_client_disconnected(std::shared_ptr<rain_net::ClientCon
 void QuickMessServer::server_accept_sign_in(std::shared_ptr<rain_net::ClientConnection> connection) {
     rain_net::Message message {MSG_SERVER_ACCEPT_SIGN_IN};
 
+    // Send all current users including this one that we're messaging
     for (const auto& [username, user] : active_users) {
         UsernameStr c_username;
         std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
@@ -87,7 +88,6 @@ void QuickMessServer::server_accept_sign_in(std::shared_ptr<rain_net::ClientConn
 
     message << static_cast<unsigned int>(active_users.size());
 
-    // Send all current users including this one that we're messaging
     send_message(connection, message);
 }
 
@@ -127,13 +127,11 @@ void QuickMessServer::server_offer_more_chat(std::shared_ptr<rain_net::ClientCon
         const std::size_t I {i - 1};
 
         UsernameStr username;
-        MessygeStr text;
-
         std::strncpy(username.data, chat.messyges.at(I).username.value_or("SERVER").c_str(), MAX_USERNAME_SIZE);
-        std::strncpy(text.data, chat.messyges.at(I).text.c_str(), MAX_MESSYGE_SIZE);
 
         message << username;
-        message << text;
+        message.write(chat.messyges.at(I).text.data(), chat.messyges.at(I).text.size());
+        message << static_cast<unsigned int>(chat.messyges.at(I).text.size());
         message << chat.messyges.at(I).index;
 
         if (++count == MAX_MESSAGES) {
@@ -147,19 +145,7 @@ void QuickMessServer::server_offer_more_chat(std::shared_ptr<rain_net::ClientCon
 }
 
 void QuickMessServer::server_messyge(const std::string& text) {
-    rain_net::Message broadcast_message {MSG_SERVER_MESSYGE};
-
-    UsernameStr username;
-    MessygeStr c_text;
-
-    std::strncpy(username.data, "SERVER", MAX_USERNAME_SIZE);
-    std::strncpy(c_text.data, text.c_str(), MAX_MESSYGE_SIZE);
-
-    broadcast_message << username;
-    broadcast_message << c_text;
-    broadcast_message << chat.index_counter;
-
-    send_message_broadcast(broadcast_message);
+    send_messyge("SERVER", text);
 
     add_messyge_to_chat("SERVER", text);
 }
@@ -208,20 +194,20 @@ void QuickMessServer::client_messyge(const rain_net::Message& message) {
     rain_net::MessageReader reader;
     reader(message);
 
-    MessygeStr text;
+    unsigned int size;
+    std::string text;
     UsernameStr username;
 
-    reader >> text;
+    reader >> size;
+
+    text.resize(size);
+
+    reader.read(text.data(), text.size());
     reader >> username;
 
-    rain_net::Message broadcast_message {MSG_SERVER_MESSYGE};
-    broadcast_message << username;
-    broadcast_message << text;
-    broadcast_message << chat.index_counter;
+    send_messyge(username.data, text);
 
-    send_message_broadcast(broadcast_message);
-
-    add_messyge_to_chat(username.data, text.data);
+    add_messyge_to_chat(username.data, text);
 }
 
 void QuickMessServer::add_messyge_to_chat(const std::string& username, const std::string& text) {
@@ -235,4 +221,18 @@ void QuickMessServer::add_messyge_to_chat(const std::string& username, const std
     chat.messyges.push_back(messyge);
 
     chat.index_counter++;
+}
+
+void QuickMessServer::send_messyge(const std::string& username, const std::string& text) {
+    rain_net::Message message {MSG_SERVER_MESSYGE};
+
+    UsernameStr c_username;
+    std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
+
+    message << c_username;
+    message.write(text.data(), text.size());
+    message << static_cast<unsigned int>(text.size());
+    message << chat.index_counter;
+
+    send_message_broadcast(message);
 }

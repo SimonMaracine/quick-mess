@@ -27,7 +27,7 @@ enum MessygeType {
 };
 
 inline constexpr std::size_t MAX_USERNAME_SIZE {16};
-inline constexpr std::size_t MAX_MESSYGE_SIZE {256};
+inline constexpr std::size_t MAX_MESSYGE_SIZE {512};
 
 inline constexpr std::uint16_t PORT {7021};
 
@@ -37,7 +37,6 @@ struct StaticCStr {
 };
 
 using UsernameStr = StaticCStr<MAX_USERNAME_SIZE>;
-using MessygeStr = StaticCStr<MAX_MESSYGE_SIZE>;
 
 struct User {
     std::string username;

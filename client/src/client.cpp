@@ -27,13 +27,11 @@ void QuickMessClient::client_messyge(const std::string& username, const std::str
     rain_net::Message message {MSG_CLIENT_MESSYGE};
 
     UsernameStr c_username;
-    MessygeStr c_text;
-
     std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
-    std::strncpy(c_text.data, text.c_str(), MAX_MESSYGE_SIZE);
 
     message << c_username;
-    message << c_text;
+    message.write(text.data(), text.size());
+    message << static_cast<unsigned int>(text.size());
 
     send_message(message);
 }

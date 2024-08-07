@@ -39,6 +39,7 @@ private:
     void client_ask_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, const rain_net::Message& message);
     void client_messyge(const rain_net::Message& message);
 
+    void send_messyge(const std::string& username, const std::string& text);
     void add_messyge_to_chat(const std::string& username, const std::string& text);
 
     std::unordered_map<std::string, User> active_users;

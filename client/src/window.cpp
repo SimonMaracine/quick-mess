@@ -20,7 +20,7 @@ void QuickMessWindow::start() {
     ImGuiStyle& style {ImGui::GetStyle()};
     style.ScaleAllSizes(static_cast<float>(dpi));
 
-    CHAT_HEIGHT = rem(8.0f);
+    chat_height = rem(8.0f);
 
     ImGuiIO& io {ImGui::GetIO()};
     io.IniFilename = nullptr;
@@ -49,7 +49,7 @@ void QuickMessWindow::update() {
         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
     };
 
-    CHAT_HEIGHT = rem(8.0f);
+    chat_height = rem(8.0f);
 
     ImGui::Begin("Main", nullptr, flags);
     switch (state) {
@@ -190,7 +190,7 @@ void QuickMessWindow::ui_chat() {
 }
 
 void QuickMessWindow::ui_chat_users() {
-    ImGui::BeginChild("Users", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
+    ImGui::BeginChild("Users", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - chat_height));
 
     ImGui::Text("Active Users");
     ImGui::Separator();
@@ -209,7 +209,7 @@ void QuickMessWindow::ui_chat_users() {
 }
 
 void QuickMessWindow::ui_chat_messages() {
-    ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
+    ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - chat_height));
 
     ImGui::TextColored(BLUEISH, "Messy Chat - %s", data.username.c_str());
 
@@ -242,15 +242,15 @@ void QuickMessWindow::ui_chat_messages() {
         ImGui::Spacing();
         ImGui::Spacing();
 
-        for (const auto& message : data.chat.messyges) {
-            if (!message.username) {
+        for (const auto& messyge : data.chat.messyges) {
+            if (!messyge.username) {
                 static constexpr auto COLOR {ImVec4(0.5f, 0.5f, 0.9f, 1.0f)};
 
                 ImGui::TextColored(COLOR, "[SERVER]");
-                ImGui::TextColored(COLOR, "%s", message.text.c_str());
+                ImGui::TextColored(COLOR, "%s", messyge.text.c_str());
             } else {
-                ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]", message.username->c_str());
-                ImGui::TextWrapped("%s", message.text.c_str());
+                ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]", messyge.username->c_str());
+                ImGui::TextWrapped("%s", messyge.text.c_str());
             }
 
             ImGui::Spacing();
@@ -340,14 +340,19 @@ void QuickMessWindow::server_offer_more_chat(const rain_net::Message& message) {
 
     for (unsigned int i {0}; i < count; i++) {
         unsigned int index;
-        MessygeStr text;
+        unsigned int size;
+        std::string text;
         UsernameStr username;
 
         reader >> index;
-        reader >> text;
+        reader >> size;
+
+        text.resize(size);
+
+        reader.read(text.data(), text.size());
         reader >> username;
 
-        add_messyge_to_chat(username.data, text.data, index);
+        add_messyge_to_chat(username.data, text, index);
     }
 
     sort_messyges();
@@ -364,32 +369,20 @@ void QuickMessWindow::server_messyge(const rain_net::Message& message) {
     reader(message);
 
     unsigned int index;
-    MessygeStr text;
+    unsigned int size;
+    std::string text;
     UsernameStr username;
 
     reader >> index;
-    reader >> text;
+    reader >> size;
+
+    text.resize(size);
+
+    reader.read(text.data(), text.size());
     reader >> username;
 
-    add_messyge_to_chat(username.data, text.data, index);
+    add_messyge_to_chat(username.data, text, index);
     sort_messyges();
-}
-
-void QuickMessWindow::sign_in() {
-    if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
-        client.client_ask_sign_in(buffer_username);
-
-        state = State::Processing;
-    } else {
-        std::cerr << "Invalid username\n";
-    }
-}
-
-void QuickMessWindow::send_messyge(const char* buffer) {
-    assert(buffer != nullptr);
-    assert(!data.username.empty());
-
-    client.client_messyge(data.username, buffer);
 }
 
 void QuickMessWindow::process_messages() {
@@ -423,6 +416,23 @@ void QuickMessWindow::process_messages() {
                 break;
         }
     }
+}
+
+void QuickMessWindow::sign_in() {
+    if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
+        client.client_ask_sign_in(buffer_username);
+
+        state = State::Processing;
+    } else {
+        std::cerr << "Invalid username\n";
+    }
+}
+
+void QuickMessWindow::send_messyge(const char* buffer) {
+    assert(buffer != nullptr);
+    assert(!data.username.empty());
+
+    client.client_messyge(data.username, buffer);
 }
 
 void QuickMessWindow::add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index) {

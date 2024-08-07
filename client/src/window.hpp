@@ -45,9 +45,9 @@ private:
     void server_messyge(const rain_net::Message& message);
 
     // Helpers
+    void process_messages();
     void sign_in();
     void send_messyge(const char* buffer);
-    void process_messages();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
     void sort_messyges();
 
@@ -65,7 +65,7 @@ private:
         std::vector<std::string> users;
     } data;
 
+    float chat_height {};
     char buffer_username[MAX_USERNAME_SIZE] {};
-    float CHAT_HEIGHT {};
     bool load_more {true};
 };
