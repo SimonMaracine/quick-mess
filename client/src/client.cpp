@@ -26,14 +26,14 @@ void QuickMessClient::client_ask_more_chat(unsigned int from_index) {
 void QuickMessClient::client_messyge(const std::string& username, const std::string& text) {
     rain_net::Message message {MSG_CLIENT_MESSYGE};
 
-    UsernameStr source_username;
-    MessygeStr source_text;
+    UsernameStr c_username;
+    MessygeStr c_text;
 
-    std::strncpy(source_username.data, username.c_str(), MAX_USERNAME_SIZE);
-    std::strncpy(source_text.data, text.c_str(), MAX_MESSYGE_SIZE);
+    std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
+    std::strncpy(c_text.data, text.c_str(), MAX_MESSYGE_SIZE);
 
-    message << source_username;
-    message << source_text;
+    message << c_username;
+    message << c_text;
 
     send_message(message);
 }

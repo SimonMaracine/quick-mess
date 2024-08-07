@@ -27,14 +27,14 @@ private:
     void stop() override;
 
     // UI states
-    void no_connection();
-    void connecting();
-    void sign_in();
-    void processing();
-    void chat();
+    void ui_no_connection();
+    void ui_connecting();
+    void ui_sign_in();
+    void ui_processing();
+    void ui_chat();
 
-    void chat_users();
-    void chat_messages();
+    void ui_chat_users();
+    void ui_chat_messages();
 
     // Server
     void server_accept_sign_in(const rain_net::Message& message);
@@ -44,9 +44,12 @@ private:
     void server_offer_more_chat(const rain_net::Message& message);
     void server_messyge(const rain_net::Message& message);
 
+    // Helpers
+    void sign_in();
+    void send_messyge(const char* buffer);
     void process_messages();
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
-    void sort_messages();
+    void sort_messyges();
 
     static unsigned int load_dpi(const DataFile& data_file);
     static DataFile load_data();

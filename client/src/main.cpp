@@ -10,7 +10,7 @@ int main() {
     properties.height = 432;
     properties.min_width = 512;
     properties.min_height = 288;
-    properties.title = "quick-mess";
+    properties.title = "Quick Mess";
 
     try {
         QuickMessWindow window {properties};

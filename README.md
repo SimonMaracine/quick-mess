@@ -1,4 +1,4 @@
-# quick-mess
+# Quick Mess
 
 ## Yet another chat application
 

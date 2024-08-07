@@ -9,7 +9,7 @@
 
 #include "font.hpp"
 
-static constexpr ImVec4 BLUEISH {ImVec4(0.6f, 0.5f, 1.0f, 1.0f)};
+static constexpr ImVec4 BLUEISH {ImVec4(0.7f, 0.6f, 1.0f, 1.0f)};
 
 void QuickMessWindow::start() {
     const DataFile data_file {load_data()};
@@ -54,19 +54,19 @@ void QuickMessWindow::update() {
     ImGui::Begin("Main", nullptr, flags);
     switch (state) {
         case State::NoConnection:
-            no_connection();
+            ui_no_connection();
             break;
         case State::Connecting:
-            connecting();
+            ui_connecting();
             break;
         case State::SignIn:
-            sign_in();
+            ui_sign_in();
             break;
         case State::Processing:
-            processing();
+            ui_processing();
             break;
         case State::Chat:
-            chat();
+            ui_chat();
             break;
     }
     ImGui::End();
@@ -86,7 +86,7 @@ void QuickMessWindow::stop() {
     client.disconnect();
 }
 
-void QuickMessWindow::no_connection() {
+void QuickMessWindow::ui_no_connection() {
     ImGui::Text("Disconnected from server.");
 
     ImGui::Spacing();
@@ -107,7 +107,7 @@ void QuickMessWindow::no_connection() {
     }
 }
 
-void QuickMessWindow::connecting() {
+void QuickMessWindow::ui_connecting() {
     if (client.connection_established()) {
         state = State::SignIn;
     }
@@ -115,33 +115,31 @@ void QuickMessWindow::connecting() {
     ImGui::Text("Connecting... Please wait.");
 }
 
-void QuickMessWindow::sign_in() {
+void QuickMessWindow::ui_sign_in() {
     ImGui::TextColored(BLUEISH, "Connected to the server!");
 
     ImGui::Spacing();
 
     ImGui::PushItemWidth(rem(13.5f));
-    ImGui::InputText("Username", buffer_username, MAX_USERNAME_SIZE);
+
+    if (ImGui::InputText("Username", buffer_username, MAX_USERNAME_SIZE, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        sign_in();
+    }
+
     ImGui::PopItemWidth();
 
     ImGui::Spacing();
 
     if (ImGui::Button("Sign In")) {
-        if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
-            client.client_ask_sign_in(buffer_username);
-
-            state = State::Processing;
-        } else {
-            std::cerr << "Invalid username\n";
-        }
+        sign_in();
     }
 }
 
-void QuickMessWindow::processing() {
+void QuickMessWindow::ui_processing() {
     ImGui::Text("Processing... Please wait.");
 }
 
-void QuickMessWindow::chat() {
+void QuickMessWindow::ui_chat() {
     const float USERS_WIDTH {rem(13.5f)};
     const float BUTTON_WIDTH {rem(8.5f)};
 
@@ -155,11 +153,11 @@ void QuickMessWindow::chat() {
 
         ImGui::TableNextColumn();
 
-        chat_users();
+        ui_chat_users();
 
         ImGui::TableNextColumn();
 
-        chat_messages();
+        ui_chat_messages();
 
         ImGui::EndTable();
     }
@@ -168,20 +166,30 @@ void QuickMessWindow::chat() {
 
     static char buffer[MAX_MESSYGE_SIZE] {};
     const auto size {ImVec2(ImGui::GetContentRegionAvail().x - BUTTON_WIDTH, ImGui::GetContentRegionAvail().y)};
+    bool reclaim_focus {false};
 
-    ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size);  // TODO Ctrl+Enter new line
+    const ImGuiInputTextFlags flags {ImGuiInputTextFlags_CtrlEnterForNewLine | ImGuiInputTextFlags_EnterReturnsTrue};
+
+    if (ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size, flags)) {
+        send_messyge(buffer);
+        std::memset(buffer, 0, MAX_MESSYGE_SIZE);
+        reclaim_focus = true;
+    }
+
+    // if (reclaim_focus) {  // FIXME
+    //     ImGui::SetKeyboardFocusHere(-1);
+    //     std::cout << "foo\n";
+    // }
 
     ImGui::SameLine();
 
-    if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {  // TODO Enter key event
-        assert(!data.username.empty());
-
-        client.client_messyge(data.username, buffer);
+    if (ImGui::Button("Send", ImGui::GetContentRegionAvail())) {
+        send_messyge(buffer);
         std::memset(buffer, 0, MAX_MESSYGE_SIZE);
     }
 }
 
-void QuickMessWindow::chat_users() {
+void QuickMessWindow::ui_chat_users() {
     ImGui::BeginChild("Users", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
     ImGui::Text("Active Users");
@@ -200,7 +208,7 @@ void QuickMessWindow::chat_users() {
     ImGui::EndChild();
 }
 
-void QuickMessWindow::chat_messages() {
+void QuickMessWindow::ui_chat_messages() {
     ImGui::BeginChild("Chat", ImVec2(0.0f, ImGui::GetContentRegionAvail().y - CHAT_HEIGHT));
 
     ImGui::TextColored(BLUEISH, "Messy Chat - %s", data.username.c_str());
@@ -236,12 +244,12 @@ void QuickMessWindow::chat_messages() {
 
         for (const auto& message : data.chat.messyges) {
             if (!message.username) {
-                static constexpr auto COLOR {ImVec4(0.4f, 0.4f, 0.8f, 1.0f)};
+                static constexpr auto COLOR {ImVec4(0.5f, 0.5f, 0.9f, 1.0f)};
 
-                ImGui::TextColored(COLOR, "[SERVER]\n");
+                ImGui::TextColored(COLOR, "[SERVER]");
                 ImGui::TextColored(COLOR, "%s", message.text.c_str());
             } else {
-                ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]\n", message.username->c_str());
+                ImGui::TextColored(ImVec4(0.75f, 0.75f, 0.75f, 1.0f), "[%s]", message.username->c_str());
                 ImGui::TextWrapped("%s", message.text.c_str());
             }
 
@@ -342,7 +350,7 @@ void QuickMessWindow::server_offer_more_chat(const rain_net::Message& message) {
         add_messyge_to_chat(username.data, text.data, index);
     }
 
-    sort_messages();
+    sort_messyges();
 
     load_more = true;
 }
@@ -364,7 +372,24 @@ void QuickMessWindow::server_messyge(const rain_net::Message& message) {
     reader >> username;
 
     add_messyge_to_chat(username.data, text.data, index);
-    sort_messages();
+    sort_messyges();
+}
+
+void QuickMessWindow::sign_in() {
+    if (*buffer_username != '\0' && std::strcmp(buffer_username, "SERVER") != 0) {
+        client.client_ask_sign_in(buffer_username);
+
+        state = State::Processing;
+    } else {
+        std::cerr << "Invalid username\n";
+    }
+}
+
+void QuickMessWindow::send_messyge(const char* buffer) {
+    assert(buffer != nullptr);
+    assert(!data.username.empty());
+
+    client.client_messyge(data.username, buffer);
 }
 
 void QuickMessWindow::process_messages() {
@@ -415,7 +440,7 @@ void QuickMessWindow::add_messyge_to_chat(const std::string& username, const std
     data.chat.messyges.push_back(messyge);
 }
 
-void QuickMessWindow::sort_messages() {
+void QuickMessWindow::sort_messyges() {
     std::sort(data.chat.messyges.begin(), data.chat.messyges.end(), [](const Messyge& lhs, const Messyge& rhs) {
         return lhs.index < rhs.index;
     });
