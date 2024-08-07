@@ -31,7 +31,7 @@ void QuickMessClient::client_messyge(const std::string& username, const std::str
 
     message << c_username;
     message.write(text.data(), text.size());
-    message << static_cast<unsigned int>(text.size());
+    message << static_cast<unsigned short>(text.size());
 
     send_message(message);
 }

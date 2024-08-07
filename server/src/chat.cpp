@@ -52,7 +52,7 @@ void save_chat(const Chat& chat) {
 
     for (const Messyge& messyge : chat.messyges) {
         nlohmann::json message;
-        message["username"] = messyge.username.value_or("SERVER");
+        message["username"] = messyge.username;
         message["text"] = messyge.text;
         message["index"] = messyge.index;
 

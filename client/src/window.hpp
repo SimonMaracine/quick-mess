@@ -9,14 +9,6 @@
 #include "client.hpp"
 #include "data.hpp"
 
-enum class State {
-    NoConnection,
-    Connecting,
-    SignIn,
-    Processing,
-    Chat
-};
-
 class QuickMessWindow : public gui_base::GuiApplication {
 public:
     explicit QuickMessWindow(const gui_base::WindowProperties& properties)
@@ -50,22 +42,27 @@ private:
     void send_messyge(const char* buffer);
     void add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index);
     void sort_messyges();
+    void clear_data();
 
     static unsigned int load_dpi(const DataFile& data_file);
     static DataFile load_data();
     static void create_sized_fonts(unsigned int scale);
     static float rem(float size);
 
-    QuickMessClient client;
-    State state {State::Connecting};
+    QuickMessClient m_client;
 
-    struct {
-        std::string username;
-        Chat chat;
-        std::vector<std::string> users;
-    } data;
+    enum class State {
+        NoConnection,
+        Connecting,
+        SignIn,
+        Processing,
+        Chat
+    } m_state {State::Connecting};
 
-    float chat_height {};
-    char buffer_username[MAX_USERNAME_SIZE] {};
-    bool load_more {true};
+    Chat m_chat;
+    std::vector<ClientUser> m_active_users;
+
+    float m_chat_height {};
+    char m_buffer_username[MAX_USERNAME_SIZE] {};
+    bool m_load_more {true};
 };

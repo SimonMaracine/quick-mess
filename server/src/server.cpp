@@ -38,20 +38,20 @@ void QuickMessServer::process_messages() {
 void QuickMessServer::update_disconnected_users() {
     check_connections();
 
-    for (const auto& username : disconnected_users) {
+    for (const auto& username : m_disconnected_users) {
         server_user_signed_out(username);
         server_messyge(username + " left the chat.");
     }
 
-    disconnected_users.clear();
+    m_disconnected_users.clear();
 }
 
-void QuickMessServer::import_chat(Chat&& chat_) {
-    chat = std::move(chat_);
+void QuickMessServer::import_chat(Chat&& chat) {
+    m_chat = std::move(chat);
 }
 
 Chat QuickMessServer::export_chat() const {
-    return chat;
+    return m_chat;
 }
 
 bool QuickMessServer::on_client_connected(std::shared_ptr<rain_net::ClientConnection>) {
@@ -61,15 +61,15 @@ bool QuickMessServer::on_client_connected(std::shared_ptr<rain_net::ClientConnec
 void QuickMessServer::on_client_disconnected(std::shared_ptr<rain_net::ClientConnection> connection) {
     // The disconnected client might not be in the active_users list
 
-    for (const auto& [username, user] : active_users) {
+    for (const auto& [username, user] : m_active_users) {
         if (user.connection->get_id() != connection->get_id()) {
             continue;
         }
 
         std::cout << server << "User `" << username << "` (index " << connection->get_id() << ") signed out\n";
 
-        disconnected_users.push_back(username);
-        active_users.erase(username);
+        m_disconnected_users.push_back(username);
+        m_active_users.erase(username);
 
         break;
     }
@@ -79,14 +79,14 @@ void QuickMessServer::server_accept_sign_in(std::shared_ptr<rain_net::ClientConn
     rain_net::Message message {MSG_SERVER_ACCEPT_SIGN_IN};
 
     // Send all current users including this one that we're messaging
-    for (const auto& [username, user] : active_users) {
+    for (const auto& [username, user] : m_active_users) {
         UsernameStr c_username;
         std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
 
         message << c_username;
     }
 
-    message << static_cast<unsigned int>(active_users.size());
+    message << static_cast<unsigned short>(m_active_users.size());
 
     send_message(connection, message);
 }
@@ -127,12 +127,12 @@ void QuickMessServer::server_offer_more_chat(std::shared_ptr<rain_net::ClientCon
         const std::size_t I {i - 1};
 
         UsernameStr username;
-        std::strncpy(username.data, chat.messyges.at(I).username.value_or("SERVER").c_str(), MAX_USERNAME_SIZE);
+        std::strncpy(username.data, m_chat.messyges.at(I).username.c_str(), MAX_USERNAME_SIZE);
 
         message << username;
-        message.write(chat.messyges.at(I).text.data(), chat.messyges.at(I).text.size());
-        message << static_cast<unsigned int>(chat.messyges.at(I).text.size());
-        message << chat.messyges.at(I).index;
+        message.write(m_chat.messyges.at(I).text.data(), m_chat.messyges.at(I).text.size());
+        message << static_cast<unsigned short>(m_chat.messyges.at(I).text.size());
+        message << m_chat.messyges.at(I).index;
 
         if (++count == MAX_MESSAGES) {
             break;
@@ -157,7 +157,7 @@ void QuickMessServer::client_ask_sign_in(std::shared_ptr<rain_net::ClientConnect
     UsernameStr username;
     reader >> username;
 
-    if (active_users.find(std::string(username.data)) != active_users.end()) {
+    if (m_active_users.find(std::string(username.data)) != m_active_users.end()) {
         std::cout << server << "Denied user `" << username.data << "` (index " << connection->get_id() << ") sign in\n";
 
         server_deny_sign_in(connection);
@@ -165,11 +165,11 @@ void QuickMessServer::client_ask_sign_in(std::shared_ptr<rain_net::ClientConnect
         return;
     }
 
-    User user;
+    ServerUser user;
     user.username = username.data;
     user.connection = connection;
 
-    active_users[user.username] = user;
+    m_active_users[user.username] = user;
 
     server_accept_sign_in(connection);
     server_user_signed_in(connection, username);
@@ -194,7 +194,7 @@ void QuickMessServer::client_messyge(const rain_net::Message& message) {
     rain_net::MessageReader reader;
     reader(message);
 
-    unsigned int size;
+    unsigned short size;
     std::string text;
     UsernameStr username;
 
@@ -210,19 +210,6 @@ void QuickMessServer::client_messyge(const rain_net::Message& message) {
     add_messyge_to_chat(username.data, text);
 }
 
-void QuickMessServer::add_messyge_to_chat(const std::string& username, const std::string& text) {
-    // Note that index_counter must be read before increment
-
-    Messyge messyge;
-    messyge.username = username;
-    messyge.text = text;
-    messyge.index = chat.index_counter;
-
-    chat.messyges.push_back(messyge);
-
-    chat.index_counter++;
-}
-
 void QuickMessServer::send_messyge(const std::string& username, const std::string& text) {
     rain_net::Message message {MSG_SERVER_MESSYGE};
 
@@ -231,8 +218,21 @@ void QuickMessServer::send_messyge(const std::string& username, const std::strin
 
     message << c_username;
     message.write(text.data(), text.size());
-    message << static_cast<unsigned int>(text.size());
-    message << chat.index_counter;
+    message << static_cast<unsigned short>(text.size());
+    message << m_chat.index_counter;
 
     send_message_broadcast(message);
+}
+
+void QuickMessServer::add_messyge_to_chat(const std::string& username, const std::string& text) {
+    // Note that index_counter must be read before increment
+
+    Messyge messyge;
+    messyge.username = username;
+    messyge.text = text;
+    messyge.index = m_chat.index_counter;
+
+    m_chat.messyges.push_back(messyge);
+
+    m_chat.index_counter++;
 }

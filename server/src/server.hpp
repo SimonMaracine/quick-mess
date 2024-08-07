@@ -20,7 +20,7 @@ public:
     void process_messages();
     void update_disconnected_users();
 
-    void import_chat(Chat&& chat_);
+    void import_chat(Chat&& chat);
     Chat export_chat() const;
 private:
     bool on_client_connected(std::shared_ptr<rain_net::ClientConnection> connection) override;
@@ -42,8 +42,7 @@ private:
     void send_messyge(const std::string& username, const std::string& text);
     void add_messyge_to_chat(const std::string& username, const std::string& text);
 
-    std::unordered_map<std::string, User> active_users;
-    std::vector<std::string> disconnected_users;
-
-    Chat chat;
+    Chat m_chat;
+    std::unordered_map<std::string, ServerUser> m_active_users;
+    std::vector<std::string> m_disconnected_users;
 };

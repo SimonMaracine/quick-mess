@@ -38,13 +38,17 @@ struct StaticCStr {
 
 using UsernameStr = StaticCStr<MAX_USERNAME_SIZE>;
 
-struct User {
+struct ServerUser {
     std::string username;
     std::shared_ptr<rain_net::ClientConnection> connection;
 };
 
+struct ClientUser {
+    std::string username;
+};
+
 struct Messyge {
-    std::optional<std::string> username;
+    std::string username;
     std::string text;
     unsigned int index {};
 };
