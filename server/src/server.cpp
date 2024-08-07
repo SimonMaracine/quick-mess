@@ -117,7 +117,7 @@ void QuickMessServer::server_user_signed_out(const std::string& username) {
 }
 
 void QuickMessServer::server_offer_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, unsigned int from_index) {
-    static constexpr std::size_t MAX_MESSAGES {10};
+    static constexpr std::size_t MAX_MESSAGES {8};
 
     rain_net::Message message {MSG_SERVER_OFFER_MORE_CHAT};
 
