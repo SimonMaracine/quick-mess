@@ -66,7 +66,7 @@ void QuickMessServer::on_client_disconnected(std::shared_ptr<rain_net::ClientCon
             continue;
         }
 
-        std::cout << server << "User `" << username << "` (index " << connection->get_id() << ") signed out\n";
+        std::cout << server << "User `" << username << "` (" << connection->get_id() << ") signed out\n";
 
         m_disconnected_users.push_back(username);
         m_active_users.erase(username);
@@ -158,7 +158,7 @@ void QuickMessServer::client_ask_sign_in(std::shared_ptr<rain_net::ClientConnect
     reader >> username;
 
     if (m_active_users.find(std::string(username.data)) != m_active_users.end()) {
-        std::cout << server << "Denied user `" << username.data << "` (index " << connection->get_id() << ") sign in\n";
+        std::cout << server << "Denied user `" << username.data << "` (" << connection->get_id() << ") sign in\n";
 
         server_deny_sign_in(connection);
 
@@ -175,7 +175,7 @@ void QuickMessServer::client_ask_sign_in(std::shared_ptr<rain_net::ClientConnect
     server_user_signed_in(connection, username);
     server_messyge(std::string(username.data) + " entered the chat.");
 
-    std::cout << server << "User `" << username.data << "` (index " << connection->get_id() << ") signed in\n";
+    std::cout << server << "User `" << username.data << "` (" << connection->get_id() << ") signed in\n";
 }
 
 void QuickMessServer::client_ask_more_chat(std::shared_ptr<rain_net::ClientConnection> connection, const rain_net::Message& message) {
@@ -187,7 +187,7 @@ void QuickMessServer::client_ask_more_chat(std::shared_ptr<rain_net::ClientConne
 
     server_offer_more_chat(connection, from_index);
 
-    std::cout << server << "Offered more chat to user index " << connection->get_id() << " from chat index " << from_index << '\n';
+    std::cout << server << "Offered more chat to user " << connection->get_id() << " from chat index " << from_index << '\n';
 }
 
 void QuickMessServer::client_messyge(const rain_net::Message& message) {
