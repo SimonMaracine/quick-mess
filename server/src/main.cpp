@@ -2,14 +2,9 @@
 #include <csignal>
 #include <utility>
 
-#include <rain_net/server.hpp>
-#include <common.hpp>
-
 #include "server.hpp"
 #include "chat.hpp"
 #include "clock.hpp"
-
-static volatile bool running {true};
 
 static void load_chat(QuickMessServer& server) {
     Chat chat;
@@ -34,6 +29,8 @@ static void save_chat(const QuickMessServer& server) {
     }
 }
 
+static volatile bool running {true};
+
 int main() {
     const auto handler {
         [](int) { running = false; }
@@ -47,9 +44,10 @@ int main() {
     QuickMessServer server;
 
     load_chat(server);
-    server.start(PORT);
 
-    if (server.fail()) {
+    try {
+        server.start();
+    } catch (const rain_net::ConnectionError& e) {
         return 1;
     }
 
@@ -58,11 +56,11 @@ int main() {
     while (running) {
         Clock clock;
 
-        server.process_messages();
-        server.accept_connections();
-        server.update_disconnected_users();
-
-        if (server.fail()) {
+        try {
+            server.process_messages();
+            server.accept_connections();
+            server.update_disconnected_users();
+        } catch (const rain_net::ConnectionError& e) {
             exit_code = 1;
             break;
         }

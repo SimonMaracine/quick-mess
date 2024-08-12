@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.20)
 add_subdirectory(extern/tiny-gui-base)
 
 add_executable(quick_mess
-    "src/client.cpp"
-    "src/client.hpp"
     "src/data.cpp"
     "src/data.hpp"
     "src/main.cpp"
@@ -12,7 +10,7 @@ add_executable(quick_mess
     "src/window.hpp"
 )
 
-target_link_libraries(quick_mess PRIVATE rain_net common gui_base nlohmann_json)
+target_link_libraries(quick_mess PRIVATE rain_net_client common gui_base nlohmann_json)
 
 if(UNIX)
     target_compile_options(quick_mess PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wconversion")

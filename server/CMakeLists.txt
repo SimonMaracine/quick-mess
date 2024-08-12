@@ -10,7 +10,7 @@ add_executable(quick_mess_server
     "src/server.hpp"
 )
 
-target_link_libraries(quick_mess_server PRIVATE rain_net common nlohmann_json)
+target_link_libraries(quick_mess_server PRIVATE rain_net_server common nlohmann_json)
 
 if(UNIX)
     target_compile_options(quick_mess_server PRIVATE "-Wall" "-Wextra" "-Wpedantic" "-Wconversion")

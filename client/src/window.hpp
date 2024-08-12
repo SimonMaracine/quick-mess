@@ -4,9 +4,9 @@
 #include <vector>
 
 #include <gui_base/gui_base.hpp>
+#include <rain_net/client.hpp>
 #include <common.hpp>
 
-#include "client.hpp"
 #include "data.hpp"
 
 class QuickMessWindow : public gui_base::GuiApplication {
@@ -27,6 +27,11 @@ private:
 
     void ui_chat_users();
     void ui_chat_messages();
+
+    // Client
+    void client_ask_sign_in(const std::string& username);
+    void client_ask_more_chat(unsigned int from_index);
+    void client_messyge(const std::string& username, const std::string& text);
 
     // Server
     void server_accept_sign_in(const rain_net::Message& message);
@@ -49,7 +54,7 @@ private:
     static void create_sized_fonts(unsigned int scale);
     static float rem(float size);
 
-    QuickMessClient m_client;
+    rain_net::Client m_client;
 
     enum class State {
         NoConnection,

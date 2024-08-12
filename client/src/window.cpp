@@ -25,11 +25,10 @@ void QuickMessWindow::start() {
     ImGuiIO& io {ImGui::GetIO()};
     io.IniFilename = nullptr;
 
-    m_client.connect(data_file.address, PORT);
-
-    if (m_client.fail()) {
-        std::cerr << m_client.fail_reason() << '\n';
-        m_client.disconnect();
+    try {
+        m_client.connect(data_file.address, PORT);
+    } catch (const rain_net::ConnectionError& e) {
+        std::cerr << e.what() << '\n';
 
         m_state = State::NoConnection;
     }
@@ -72,14 +71,6 @@ void QuickMessWindow::update() {
     ImGui::End();
 
     ImGui::PopStyleVar(2);
-
-    if (m_client.fail()) {
-        std::cerr << m_client.fail_reason() << '\n';
-        m_client.disconnect();
-
-        clear_data();
-        m_state = State::NoConnection;
-    }
 }
 
 void QuickMessWindow::stop() {
@@ -96,11 +87,10 @@ void QuickMessWindow::ui_no_connection() {
 
         const DataFile data_file {load_data()};
 
-        m_client.connect(data_file.address, PORT);
-
-        if (m_client.fail()) {
-            std::cerr << m_client.fail_reason() << '\n';
-            m_client.disconnect();
+        try {
+            m_client.connect(data_file.address, PORT);
+        } catch (const rain_net::ConnectionError& e) {
+            std::cerr << e.what() << '\n';
 
             m_state = State::NoConnection;
         }
@@ -108,8 +98,15 @@ void QuickMessWindow::ui_no_connection() {
 }
 
 void QuickMessWindow::ui_connecting() {
-    if (m_client.connection_established()) {
-        m_state = State::SignIn;
+    try {
+        if (m_client.connection_established()) {
+            m_state = State::SignIn;
+        }
+    } catch (const rain_net::ConnectionError& e) {
+        std::cerr << e.what() << '\n';
+
+        clear_data();
+        m_state = State::NoConnection;
     }
 
     ImGui::Text("Connecting... Please wait.");
@@ -178,7 +175,6 @@ void QuickMessWindow::ui_chat() {
 
     // if (reclaim_focus) {  // FIXME
     //     ImGui::SetKeyboardFocusHere(-1);
-    //     std::cout << "foo\n";
     // }
 
     ImGui::SameLine();
@@ -228,7 +224,7 @@ void QuickMessWindow::ui_chat_messages() {
                     if (ImGui::Button("Load More")) {
                         if (first_index > 0) {
                             m_load_more = false;
-                            m_client.client_ask_more_chat(first_index);
+                            client_ask_more_chat(first_index);
                         }
                     }
                 } else {
@@ -268,6 +264,38 @@ void QuickMessWindow::ui_chat_messages() {
     ImGui::PopStyleVar();
 
     ImGui::EndChild();
+}
+
+void QuickMessWindow::client_ask_sign_in(const std::string& username) {
+    rain_net::Message message {MSG_CLIENT_ASK_SIGN_IN};
+
+    UsernameStr c_username;
+    std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
+
+    message << c_username;
+
+    m_client.send_message(message);
+}
+
+void QuickMessWindow::client_ask_more_chat(unsigned int from_index) {
+    rain_net::Message message {MSG_CLIENT_ASK_MORE_CHAT};
+
+    message << from_index;
+
+    m_client.send_message(message);
+}
+
+void QuickMessWindow::client_messyge(const std::string& username, const std::string& text) {
+    rain_net::Message message {MSG_CLIENT_MESSYGE};
+
+    UsernameStr c_username;
+    std::strncpy(c_username.data, username.c_str(), MAX_USERNAME_SIZE);
+
+    message << c_username;
+    message.write(text.data(), text.size());
+    message << static_cast<unsigned short>(text.size());
+
+    m_client.send_message(message);
 }
 
 void QuickMessWindow::server_accept_sign_in(const rain_net::Message& message) {
@@ -394,14 +422,19 @@ void QuickMessWindow::server_messyge(const rain_net::Message& message) {
 }
 
 void QuickMessWindow::process_messages() {
-    while (true) {
-        const auto result {m_client.next_incoming_message()};
+    while (m_client.available_messages()) {
+        rain_net::Message message;
 
-        if (!result.has_value()) {
-            break;
+        try {
+            message = m_client.next_message();  // FIXME this never throws, because it's never called when errors occur
+        } catch (const rain_net::ConnectionError& e) {
+            std::cerr << e.what() << '\n';
+
+            clear_data();
+            m_state = State::NoConnection;
+
+            return;
         }
-
-        const rain_net::Message& message {*result};
 
         switch (message.id()) {
             case MSG_SERVER_ACCEPT_SIGN_IN:
@@ -428,7 +461,7 @@ void QuickMessWindow::process_messages() {
 
 void QuickMessWindow::sign_in() {
     if (*m_buffer_username != '\0' && std::strcmp(m_buffer_username, "SERVER") != 0) {
-        m_client.client_ask_sign_in(m_buffer_username);
+        client_ask_sign_in(m_buffer_username);
 
         m_state = State::Processing;
     } else {
@@ -439,7 +472,7 @@ void QuickMessWindow::sign_in() {
 void QuickMessWindow::send_messyge(const char* buffer) {
     assert(buffer != nullptr);
 
-    m_client.client_messyge(m_buffer_username, buffer);
+    client_messyge(m_buffer_username, buffer);
 }
 
 void QuickMessWindow::add_messyge_to_chat(const std::string& username, const std::string& text, unsigned int index) {
