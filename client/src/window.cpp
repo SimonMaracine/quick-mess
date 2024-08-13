@@ -35,7 +35,14 @@ void QuickMessWindow::start() {
 }
 
 void QuickMessWindow::update() {
-    process_messages();
+    try {
+        process_messages();
+    } catch (const rain_net::ConnectionError& e) {
+        std::cerr << e.what() << '\n';
+
+        clear_data();
+        m_state = State::NoConnection;
+    }
 
     const ImGuiViewport* viewport {ImGui::GetMainViewport()};
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -51,23 +58,32 @@ void QuickMessWindow::update() {
     m_chat_height = rem(8.0f);
 
     ImGui::Begin("Main", nullptr, flags);
-    switch (m_state) {
-        case State::NoConnection:
-            ui_no_connection();
-            break;
-        case State::Connecting:
-            ui_connecting();
-            break;
-        case State::SignIn:
-            ui_sign_in();
-            break;
-        case State::Processing:
-            ui_processing();
-            break;
-        case State::Chat:
-            ui_chat();
-            break;
+
+    try {
+        switch (m_state) {
+            case State::NoConnection:
+                ui_no_connection();
+                break;
+            case State::Connecting:
+                ui_connecting();
+                break;
+            case State::SignIn:
+                ui_sign_in();
+                break;
+            case State::Processing:
+                ui_processing();
+                break;
+            case State::Chat:
+                ui_chat();
+                break;
+        }
+    } catch (const rain_net::ConnectionError& e) {
+        std::cerr << e.what() << '\n';
+
+        clear_data();
+        m_state = State::NoConnection;
     }
+
     ImGui::End();
 
     ImGui::PopStyleVar(2);
@@ -423,18 +439,7 @@ void QuickMessWindow::server_messyge(const rain_net::Message& message) {
 
 void QuickMessWindow::process_messages() {
     while (m_client.available_messages()) {
-        rain_net::Message message;
-
-        try {
-            message = m_client.next_message();  // FIXME this never throws, because it's never called when errors occur
-        } catch (const rain_net::ConnectionError& e) {
-            std::cerr << e.what() << '\n';
-
-            clear_data();
-            m_state = State::NoConnection;
-
-            return;
-        }
+        const auto message {m_client.next_message()};
 
         switch (message.id()) {
             case MSG_SERVER_ACCEPT_SIGN_IN:
