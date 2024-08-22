@@ -179,19 +179,13 @@ void QuickMessWindow::ui_chat() {
 
     static char buffer[MAX_MESSYGE_SIZE] {};
     const auto size {ImVec2(ImGui::GetContentRegionAvail().x - BUTTON_WIDTH, ImGui::GetContentRegionAvail().y)};
-    bool reclaim_focus {false};
-
     const ImGuiInputTextFlags flags {ImGuiInputTextFlags_CtrlEnterForNewLine | ImGuiInputTextFlags_EnterReturnsTrue};
 
     if (ImGui::InputTextMultiline("##", buffer, MAX_MESSYGE_SIZE, size, flags)) {
         send_messyge(buffer);
         std::memset(buffer, 0, MAX_MESSYGE_SIZE);
-        reclaim_focus = true;
+        ImGui::SetKeyboardFocusHere(-1);
     }
-
-    // if (reclaim_focus) {  // FIXME
-    //     ImGui::SetKeyboardFocusHere(-1);
-    // }
 
     ImGui::SameLine();
 
