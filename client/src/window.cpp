@@ -518,7 +518,9 @@ DataFile QuickMessWindow::load_data() {
 }
 
 void QuickMessWindow::create_sized_fonts(unsigned int scale) {
-    const float SCALE {std::floor(13.0f * static_cast<float>(scale))};
+    // This is called once at the beginning, so it's easy
+
+    const float font_size {std::floor(13.0f * static_cast<float>(scale))};
 
     ImGuiIO& io {ImGui::GetIO()};
 
@@ -536,7 +538,7 @@ void QuickMessWindow::create_sized_fonts(unsigned int scale) {
         io.Fonts->AddFontFromMemoryTTF(
             const_cast<unsigned char*>(LiberationMono_Regular_ttf),
             LiberationMono_Regular_ttf_len,
-            SCALE,
+            font_size,
             &config,
             ranges.Data
         )
